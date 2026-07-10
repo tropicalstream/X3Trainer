@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Stopwatch ring -->
+    <path android:strokeColor="#FF39C2FF" android:strokeWidth="4" android:fillColor="#00000000"
+        android:pathData="M54,58 m-26,0 a26,26 0 1,0 52,0 a26,26 0 1,0 -52,0" />
+    <!-- Crown + start button -->
+    <path android:strokeColor="#FF39C2FF" android:strokeWidth="4" android:strokeLineCap="round" android:fillColor="#00000000"
+        android:pathData="M54,32 L54,24 M48,22 L60,22" />
+    <path android:strokeColor="#FF39C2FF" android:strokeWidth="3.4" android:strokeLineCap="round" android:fillColor="#00000000"
+        android:pathData="M73,38 L79,32" />
+
+    <!-- Inner glow -->
+    <path android:pathData="M54,58 m-23,0 a23,23 0 1,0 46,0 a23,23 0 1,0 -46,0">
+        <aapt:attr name="android:fillColor">
+            <gradient android:type="radial" android:centerX="54" android:centerY="58" android:gradientRadius="24">
+                <item android:offset="0.0" android:color="#3339C2FF" />
+                <item android:offset="1.0" android:color="#0039C2FF" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Heartbeat pulse trace across the dial, zone-green -->
+    <path android:strokeColor="#FF50DC78" android:strokeWidth="4.5" android:strokeLineCap="round" android:strokeLineJoin="round" android:fillColor="#00000000"
+        android:pathData="M34,58 L45,58 L50,44 L56,72 L61,52 L64,58 L74,58" />
+
+    <!-- Zone-red heart accent at the pulse peak -->
+    <path android:fillColor="#FFFF4638"
+        android:pathData="M56,34.5 c-1.4,-2.6 -5.4,-2.4 -6.2,0.5 c-0.6,2.1 1.2,3.7 3.1,5.3 l3.1,2.6 l3.1,-2.6 c1.9,-1.6 3.7,-3.2 3.1,-5.3 c-0.8,-2.9 -4.8,-3.1 -6.2,-0.5 z" />
+</vector>
