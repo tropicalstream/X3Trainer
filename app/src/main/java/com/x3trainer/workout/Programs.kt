@@ -20,6 +20,8 @@ class Program(
     val name: String,
     val tagline: String,
     val weights: Boolean,
+    /** MET intensity for the calorie estimate (kcal = MET × 3.5 × kg / 200 per minute). */
+    val met: Float,
     val restSec: IntArray,
     val steps: List<Step>,
 ) {
@@ -45,7 +47,7 @@ object Programs {
 
     val ALL: List<Program> = listOf(
         Program(
-            "FULL BODY START", "The classic all-round mat circuit", false, r(40, 30, 20),
+            "FULL BODY START", "The classic all-round mat circuit", false, 6f, r(40, 30, 20),
             listOf(
                 Step(Exercises.JUMPING_JACKS, secs = r(30, 40, 50)),
                 Step(Exercises.SQUAT, reps = r(10, 14, 18)),
@@ -57,7 +59,7 @@ object Programs {
             )
         ),
         Program(
-            "CORE CRUSHER", "Abs, obliques and back on the mat", false, r(35, 25, 20),
+            "CORE CRUSHER", "Abs, obliques and back on the mat", false, 5f, r(35, 25, 20),
             listOf(
                 Step(Exercises.CRUNCH, reps = r(12, 16, 22)),
                 Step(intArrayOf(Exercises.DEAD_BUG, Exercises.BICYCLE, Exercises.BICYCLE), reps = r(8, 12, 16)),
@@ -69,7 +71,7 @@ object Programs {
             )
         ),
         Program(
-            "HIIT SWEAT", "Short, sharp, heart-pumping intervals", false, r(30, 25, 15),
+            "HIIT SWEAT", "Short, sharp, heart-pumping intervals", false, 8f, r(30, 25, 15),
             listOf(
                 Step(Exercises.JUMPING_JACKS, secs = r(30, 40, 45)),
                 Step(Exercises.HIGH_KNEES, secs = r(20, 30, 40)),
@@ -80,7 +82,7 @@ object Programs {
             )
         ),
         Program(
-            "DUMBBELL POWER", "Full-body strength with a pair of dumbbells", true, r(45, 35, 25),
+            "DUMBBELL POWER", "Full-body strength with a pair of dumbbells", true, 5.5f, r(45, 35, 25),
             listOf(
                 Step(Exercises.GOBLET_SQUAT, reps = r(10, 12, 15)),
                 Step(Exercises.ROW_BENT, reps = r(10, 12, 15)),
@@ -93,7 +95,7 @@ object Programs {
             )
         ),
         Program(
-            "LOWER BODY BURN", "Legs and glutes, floor to standing", true, r(40, 30, 20),
+            "LOWER BODY BURN", "Legs and glutes, floor to standing", true, 6f, r(40, 30, 20),
             listOf(
                 Step(Exercises.SQUAT, reps = r(12, 15, 20)),
                 Step(Exercises.LUNGE, reps = r(6, 9, 12)),
@@ -104,7 +106,34 @@ object Programs {
             )
         ),
         Program(
-            "COOL-DOWN FLOW", "Gentle stretches to finish any session", false, r(10, 10, 10),
+            "YOGA FLOW", "A calm standing-and-floor yoga sequence", false, 3f, r(12, 12, 12),
+            listOf(
+                Step(Exercises.MOUNTAIN_REACH, secs = r(30, 40, 50)),
+                Step(Exercises.FORWARD_FOLD, secs = r(25, 35, 45)),
+                Step(Exercises.CHAIR, secs = r(20, 30, 40)),
+                Step(Exercises.WARRIOR, secs = r(32, 45, 60)),
+                Step(Exercises.TRIANGLE, secs = r(32, 45, 60)),
+                Step(Exercises.DOWNWARD_DOG, secs = r(20, 30, 40)),
+                Step(Exercises.TREE, secs = r(32, 45, 60)),
+                Step(Exercises.CHILDS_POSE, secs = r(30, 40, 50)),
+            )
+        ),
+        Program(
+            "FULL STRETCH", "Head-to-toe general stretching", false, 2.5f, r(10, 10, 10),
+            listOf(
+                Step(Exercises.NECK_ROLLS, secs = r(20, 30, 40)),
+                Step(Exercises.SHOULDER_CROSS, secs = r(28, 30, 45)),
+                Step(Exercises.TRICEP_OVERHEAD, secs = r(28, 30, 45)),
+                Step(Exercises.QUAD_STRETCH, secs = r(32, 45, 60)),
+                Step(Exercises.HIP_FLEXOR_LUNGE, secs = r(32, 45, 60)),
+                Step(Exercises.SEATED_FOLD, secs = r(30, 40, 50)),
+                Step(Exercises.BUTTERFLY, secs = r(30, 40, 50)),
+                Step(Exercises.FIGURE_FOUR, secs = r(32, 45, 60)),
+                Step(Exercises.COBRA, secs = r(20, 30, 40)),
+            )
+        ),
+        Program(
+            "COOL-DOWN FLOW", "Gentle stretches to finish any session", false, 2.5f, r(10, 10, 10),
             listOf(
                 Step(Exercises.CAT_COW, secs = r(30, 40, 50)),
                 Step(Exercises.COBRA, secs = r(20, 30, 40)),

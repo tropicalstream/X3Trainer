@@ -25,6 +25,7 @@ import com.x3trainer.gl.CoachRenderer
 import com.x3trainer.telemetry.BleSource
 import com.x3trainer.telemetry.DemoSource
 import com.x3trainer.telemetry.TelemetrySource
+import com.x3trainer.workout.WorkoutLog
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.sqrt
@@ -75,7 +76,7 @@ class MainActivity : Activity(), TrainerHost {
         store = SettingsStore(this)
         sfx = Sfx(this).also { it.loadAsync() }
         voice = CoachVoice(this).also { it.load() }
-        engine = Trainer(store, this)
+        engine = Trainer(store, this, WorkoutLog(this))
         renderer = Renderer(engine, store)
         hudView = HudView(this, engine, renderer)
         sbsRoot = BinocularSbsLayout(this).apply { addView(hudView) }
@@ -130,6 +131,8 @@ class MainActivity : Activity(), TrainerHost {
     override fun sound(id: Int, pitch: Float, vol: Float) = sfx.play(id, pitch, vol)
 
     override fun say(id: String, urgent: Boolean) = voice.say(id, urgent)
+
+    override fun sayLive(text: String) = voice.sayLive(text)
 
     override fun rebindTelemetry() {
         telemetry?.stop()

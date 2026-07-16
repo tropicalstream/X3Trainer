@@ -28,6 +28,7 @@ class TrainerMenu(private val engine: Trainer, private val store: SettingsStore)
     val items: List<SettingsItem> = listOf(
         SettingsItem("Resume", { "" }, activate = { engine.closeSettings() }),
         SettingsItem("Mat Coach Workout", { "" }, activate = { engine.openWorkoutMenu() }),
+        SettingsItem("Body Weight", { "${store.bodyWeightKg} kg" }, adjust = { d -> store.bodyWeightKg += d }),
         SettingsItem("Data Source", { store.dataSourceLabel }, adjust = { d ->
             store.dataSource += d
             engine.host.rebindTelemetry()

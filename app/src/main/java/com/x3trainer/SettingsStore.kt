@@ -119,6 +119,11 @@ class SettingsStore(context: Context) {
 
     // --- mat-coach workout ---
 
+    /** Body weight in kg — used only for the workout calorie estimate. */
+    var bodyWeightKg: Int
+        get() = p.getInt("bodyKg", 75)
+        set(v) { p.edit().putInt("bodyKg", v.coerceIn(35, 200)).apply() }
+
     /** Last selected workout program index. */
     var workoutProgram: Int
         get() = p.getInt("wkProgram", 0)
@@ -142,7 +147,7 @@ class SettingsStore(context: Context) {
             .remove("cdMin").remove("intWork").remove("intRest").remove("intRounds")
             .remove("emomMin").remove("amrapMin").remove("timerMode")
             .remove("swipeSens").remove("sbs")
-            .remove("wkProgram").remove("wkLevel")
+            .remove("wkProgram").remove("wkLevel").remove("bodyKg")
             .apply()
     }
 }

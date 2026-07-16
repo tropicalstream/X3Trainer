@@ -216,26 +216,42 @@ class Renderer(private val engine: Trainer, private val store: SettingsStore) {
         c.drawText("< ${Levels.NAMES[engine.wkLevel]} >", W / 2f, 100f, paint)
 
         // Program list with the selection expanded.
-        var y = 140f
+        var y = 128f
         for ((i, p) in Programs.ALL.withIndex()) {
             val sel = i == engine.wkProgram
             paint.textAlign = Paint.Align.LEFT
-            paint.textSize = if (sel) 22f else 17f
+            paint.textSize = if (sel) 20f else 16f
             paint.color = if (sel) Color.WHITE else Color.rgb(170, 178, 190)
             c.drawText((if (sel) "> " else "  ") + p.name, 70f, y, paint)
             paint.textAlign = Paint.Align.RIGHT
-            paint.textSize = 15f
+            paint.textSize = 14f
             paint.color = if (sel) Color.rgb(120, 255, 150) else Color.rgb(120, 128, 140)
             val mins = p.estimateMin(engine.wkLevel)
             c.drawText("${p.steps.size} moves · ~$mins min", W - 70f, y, paint)
             if (sel) {
-                y += 24f
+                y += 21f
                 paint.textAlign = Paint.Align.LEFT
-                paint.textSize = 14f
+                paint.textSize = 13f
                 paint.color = Color.rgb(160, 200, 255)
                 c.drawText(p.tagline + if (p.weights) "  —  DUMBBELLS NEEDED" else "", 88f, y, paint)
             }
-            y += 34f
+            y += 29f
+        }
+
+        // History footer — streak and weekly count keep the habit visible.
+        val total = engine.log.totalSessions()
+        if (total > 0) {
+            paint.textAlign = Paint.Align.CENTER
+            paint.textSize = 14f
+            paint.color = Color.rgb(150, 200, 255)
+            val streak = engine.log.streakDays()
+            val week = engine.log.weekCount()
+            val done = engine.log.completions(engine.wkProgram, engine.wkLevel)
+            var line = "this week: $week · total: $total" +
+                (if (streak >= 2) " · streak: $streak days" else "")
+            if (done in 1..2) line += " · this program: $done/3 to level up"
+            else if (done >= 3 && engine.wkLevel < 2) line += " · ready for the next level!"
+            c.drawText(line, W / 2f, H - 46f, paint)
         }
 
         val blink = 0.6f + 0.4f * sin(engine.time * 4f)

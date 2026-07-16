@@ -6,6 +6,7 @@ import com.x3trainer.audio.Sfx
 import com.x3trainer.telemetry.TelemetrySample
 import com.x3trainer.telemetry.TelemetrySource
 import com.x3trainer.workout.Programs
+import com.x3trainer.workout.WorkoutLog
 import com.x3trainer.workout.WorkoutSession
 
 enum class AppState { DISCLAIMER, HUD, SETTINGS, WORKOUT_MENU, WORKOUT }
@@ -15,6 +16,8 @@ interface TrainerHost {
     fun applySettings()
     fun sound(id: Int, pitch: Float = 1f, vol: Float = 1f)
     fun say(id: String, urgent: Boolean = false)
+    /** Speak dynamic text (live vitals, stats) that can't be pre-generated. */
+    fun sayLive(text: String)
     /** (Re)build the telemetry source for the current settings choice. */
     fun rebindTelemetry()
     /** Show/hide the GL mat-coach surface (true while state == WORKOUT). */
@@ -29,13 +32,17 @@ interface TrainerHost {
  *   bottom 10% — telemetry string    (tinted by current HR zone)
  * Triple tap opens settings.
  */
-class Trainer(val store: SettingsStore, val host: TrainerHost) : TimerEvents, TelemetrySource.Listener {
+class Trainer(
+    val store: SettingsStore,
+    val host: TrainerHost,
+    val log: WorkoutLog,
+) : TimerEvents, TelemetrySource.Listener {
 
     var state = AppState.DISCLAIMER; private set
     val timer = SportsTimer(store, this)
     val coach = CoachEngine(store) { id, urgent -> host.say(id, urgent) }
     val menu = TrainerMenu(this, store)
-    val workout = WorkoutSession(host)
+    val workout = WorkoutSession(host, log) { store.bodyWeightKg }
 
     // Workout picker selection (state == WORKOUT_MENU).
     var wkProgram = 0; private set
@@ -77,7 +84,7 @@ class Trainer(val store: SettingsStore, val host: TrainerHost) : TimerEvents, Te
         if (state == AppState.HUD) {
             coach.update(dt, timer.running, timer.elapsed, hr, zone, cadence, deltaV)
         }
-        if (state == AppState.WORKOUT) workout.update(dt)
+        if (state == AppState.WORKOUT) workout.update(dt, hr, zone)
         if (warningFlash > 0f) warningFlash = maxOf(0f, warningFlash - dt * 0.5f)
         if (warningText != null && time > warningUntil) warningText = null
         if (pendingMode != null && time > pendingUntil) {

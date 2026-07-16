@@ -29,6 +29,17 @@ class Rig {
         private const val UARM = 0.30f
         private const val FARM = 0.27f
         const val HEAD_R = 0.10f
+
+        // Contact radius per joint — the body's thickness for grounding.
+        // Without this the line skeleton grounds on the head sphere alone and
+        // every lying pose tilts (head touches, torso floats).
+        private val CONTACT = floatArrayOf(
+            0.09f, 0.09f, 0.08f, HEAD_R,          // pelvis chest neck head
+            0.09f, 0.045f, 0.045f, 0.02f,          // left leg
+            0.09f, 0.045f, 0.045f, 0.02f,          // right leg
+            0.09f, 0.045f, 0.045f, 0.02f,          // left arm
+            0.09f, 0.045f, 0.045f, 0.02f,          // right arm
+        )
     }
 
     /** World-space joint positions, xyz per joint, valid after solve(). */
@@ -77,12 +88,11 @@ class Rig {
         arm(SH_L, 0.20f, ch[Pose.SHPL], ch[Pose.SHABDL], ch[Pose.ELBL], barAxisL)
         arm(SH_R, -0.20f, ch[Pose.SHPR], -ch[Pose.SHABDR], ch[Pose.ELBR], barAxisR)
 
-        // Ground: shift so the lowest contact (including the head sphere)
-        // rests on the floor, then apply the hop.
+        // Ground: shift so the lowest contact point (joint minus its body
+        // thickness) rests on the floor, then apply the hop.
         var minY = Float.MAX_VALUE
         for (j in 0 until JOINTS) {
-            var y = pos[j * 3 + 1]
-            if (j == HEAD) y -= HEAD_R
+            val y = pos[j * 3 + 1] - CONTACT[j]
             if (y < minY) minY = y
         }
         val lift = -minY + ch[Pose.HOP]

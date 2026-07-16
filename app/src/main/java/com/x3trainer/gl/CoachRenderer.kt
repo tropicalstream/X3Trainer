@@ -56,6 +56,7 @@ class CoachRenderer(private val engine: Trainer) : GLSurfaceView.Renderer {
     private var stepStr = ""; private var lastStep = -1
     private var counterStr = ""; private var lastCounterKey = Int.MIN_VALUE
     private var hrStr = "--BPM"; private var lastHr = -1; private var lastZone = -1
+    private var doneHrStr = ""; private var doneLogStr = ""
     private val sb = StringBuilder(24)
 
     // ------------------------------------------------------------ lifecycle
@@ -321,10 +322,19 @@ class CoachRenderer(private val engine: Trainer) : GLSurfaceView.Renderer {
 
         when (snap.phase) {
             WorkoutSession.DONE -> {
-                textC("WORKOUT COMPLETE!", 320f, 200f, 2.4f, 0.45f, 1f, 0.6f)
+                textC("WORKOUT COMPLETE!", 320f, 185f, 2.4f, 0.45f, 1f, 0.6f)
                 val key = snap.totalSec * 1000 + snap.totalReps
-                if (key != lastCounterKey) { lastCounterKey = key; counterStr = "TIME " + clock(snap.totalSec) + " - REPS " + snap.totalReps }
-                textC(counterStr, 320f, 240f, 1.5f, 0.9f, 0.95f, 1f)
+                if (key != lastCounterKey) {
+                    lastCounterKey = key
+                    counterStr = "TIME " + clock(snap.totalSec) + " - REPS " + snap.totalReps + " - " + snap.kcal + " KCAL"
+                    doneHrStr = if (snap.avgHr > 0) "AVG HR " + snap.avgHr + " - PEAK " + snap.peakHr else ""
+                    doneLogStr = "SESSION " + snap.sessions +
+                        (if (snap.streak >= 2) " - STREAK " + snap.streak + " DAYS" else "")
+                }
+                textC(counterStr, 320f, 222f, 1.5f, 0.9f, 0.95f, 1f)
+                if (doneHrStr.isNotEmpty()) textC(doneHrStr, 320f, 248f, 1.3f, 1f, 0.6f, 0.5f)
+                textC(doneLogStr, 320f, 274f, 1.3f, 0.6f, 0.85f, 1f)
+                if (snap.levelUp) textC("READY FOR THE NEXT LEVEL!", 320f, 300f, 1.3f, 1f, 0.85f, 0.35f)
                 val blink = 0.55f + 0.45f * sin(t * 5f)
                 textC("TAP TO FINISH", 320f, 430f, 1.4f, 0.45f, 1f, 0.6f, blink)
             }

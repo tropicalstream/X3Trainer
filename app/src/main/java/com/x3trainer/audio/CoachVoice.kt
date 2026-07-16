@@ -26,6 +26,8 @@ class CoachVoice(private val context: Context) {
 
     private val TAG = "X3TrainerVoice"
 
+    companion object { private const val LIVE = "LIVE:" }
+
     @Volatile var volume = 0.9f
 
     private val phrases = HashMap<String, String>()
@@ -64,17 +66,31 @@ class CoachVoice(private val context: Context) {
     fun say(id: String, urgent: Boolean = false) {
         if (volume <= 0.01f) return
         if (!phrases.containsKey(id)) return
+        enqueue(id, urgent)
+    }
+
+    /**
+     * Speak dynamic text (live vitals, personalized stats) through TTS — this
+     * content can't be pre-generated because it embeds live numbers. Entries
+     * are marked so pump() skips the clip lookup.
+     */
+    fun sayLive(text: String) {
+        if (volume <= 0.01f || text.isBlank()) return
+        enqueue(LIVE + text, urgent = false)
+    }
+
+    private fun enqueue(item: String, urgent: Boolean) {
         synchronized(queue) {
             if (urgent) {
                 queue.clear()
                 stopCurrent()
-                queue.add(id)
+                queue.add(item)
             } else {
                 if (speaking || queue.isNotEmpty()) {
                     // Never stack chatter: keep at most one pending phrase.
                     if (queue.size >= 1) return
                 }
-                queue.add(id)
+                queue.add(item)
             }
         }
         pump()
@@ -87,6 +103,7 @@ class CoachVoice(private val context: Context) {
             id = queue.pollFirst() ?: return
             speaking = true
         }
+        if (id.startsWith(LIVE)) { speakText("live", id.substring(LIVE.length)); return }
         val clip = findClip(id)
         if (clip != null) playClip(clip) else speakFallback(id)
     }
@@ -125,11 +142,14 @@ class CoachVoice(private val context: Context) {
     }
 
     private fun speakFallback(id: String) {
-        val text = phrases[id]
+        speakText(id, phrases[id])
+    }
+
+    private fun speakText(utterId: String, text: String?) {
         if (!ttsReady || text == null) { speaking = false; return }
         val params = android.os.Bundle()
         params.putFloat(TextToSpeech.Engine.KEY_PARAM_VOLUME, volume)
-        tts?.speak(text, TextToSpeech.QUEUE_FLUSH, params, id)
+        tts?.speak(text, TextToSpeech.QUEUE_FLUSH, params, utterId)
     }
 
     private fun stopCurrent() {

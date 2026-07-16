@@ -8,12 +8,19 @@ import com.x3trainer.engine.TrainerHost
  * renderer reads it through snapshot() — every public mutator and the
  * snapshot are synchronized so the render thread always sees a coherent
  * frame. Voice fires only at phase boundaries (never mid-rep), keeping the
- * animation thread free of surprise audio work.
+ * animation thread free of surprise audio work. Live vitals lines (heart
+ * rate, zone, calories) are spoken through dynamic TTS because they embed
+ * live numbers; everything else uses the pre-generated coach voice.
  *
  * Flow: GETSET (5 s, coach demos the first move slowly) -> WORK -> REST
- * (coach previews the next move) -> … -> DONE (victory pose + summary).
+ * (coach previews the next move) -> … -> DONE (victory pose + summary,
+ * saved to the workout log).
  */
-class WorkoutSession(private val host: TrainerHost) {
+class WorkoutSession(
+    private val host: TrainerHost,
+    private val log: WorkoutLog,
+    private val weightKg: () -> Int,
+) {
 
     companion object {
         const val OFF = 0; const val GETSET = 1; const val WORK = 2; const val REST = 3; const val DONE = 4
@@ -24,6 +31,7 @@ class WorkoutSession(private val host: TrainerHost) {
     var active = false; private set
 
     private var program: Program = Programs.ALL[0]
+    private var programIdx = 0
     private var level = 1
     private var phase = OFF
     private var stepIdx = 0
@@ -35,6 +43,18 @@ class WorkoutSession(private val host: TrainerHost) {
     private var totalReps = 0
     private var lastBeepSec = -1
 
+    // Live vitals across the session (fed by the telemetry source).
+    private var hr = 0
+    private var zone = 0
+    private var hrSum = 0L
+    private var hrN = 0
+    private var peakHr = 0
+    private var restVitalsToggle = false
+    private var doneKcal = 0
+    private var doneStreak = 0
+    private var doneSessions = 0
+    private var doneLevelUp = false
+
     private fun step() = program.steps[stepIdx]
     private fun exId() = step().ex[level]
     private fun repTarget() = step().reps?.get(level) ?: 0
@@ -43,13 +63,16 @@ class WorkoutSession(private val host: TrainerHost) {
     private fun tempo() = Levels.TEMPO[level]
 
     @Synchronized
-    fun start(programIdx: Int, lvl: Int) {
-        program = Programs.ALL[programIdx.coerceIn(0, Programs.ALL.size - 1)]
+    fun start(pIdx: Int, lvl: Int) {
+        programIdx = pIdx.coerceIn(0, Programs.ALL.size - 1)
+        program = Programs.ALL[programIdx]
         level = lvl.coerceIn(0, 2)
         stepIdx = 0; reps = 0; totalReps = 0; totalT = 0f
         phase = GETSET; phaseT = 0f; u = 0f; paused = false; lastBeepSec = -1
+        hrSum = 0; hrN = 0; peakHr = 0; restVitalsToggle = false; doneLevelUp = false
         active = true
         host.say("wk_ready")
+        if (program.met >= 5f) host.say("wk_warmup")
     }
 
     @Synchronized
@@ -81,10 +104,14 @@ class WorkoutSession(private val host: TrainerHost) {
     }
 
     @Synchronized
-    fun update(dt: Float) {
+    fun update(dt: Float, liveHr: Int, liveZone: Int) {
         if (!active || paused || phase == OFF) return
-        totalT += dt
-        phaseT += dt
+        hr = liveHr; zone = liveZone
+        if (hr > 0 && phase != DONE) {
+            hrSum += hr; hrN++
+            if (hr > peakHr) peakHr = hr
+        }
+        if (phase != DONE) { totalT += dt; phaseT += dt }
         when (phase) {
             GETSET -> {
                 u += dt * PREVIEW_TEMPO / Exercises.ALL[exId()].cycleSec
@@ -139,9 +166,7 @@ class WorkoutSession(private val host: TrainerHost) {
 
     private fun advance(fromSkip: Boolean = false) {
         if (stepIdx >= program.steps.size - 1) {
-            phase = DONE; phaseT = 0f; u = 0f
-            host.sound(Sfx.FANFARE)
-            host.say("wk_done")
+            finish()
             return
         }
         stepIdx++
@@ -149,7 +174,38 @@ class WorkoutSession(private val host: TrainerHost) {
         if (!fromSkip) {
             host.sound(Sfx.DING)
             host.say(if (stepIdx == program.steps.size - 1) "wk_last" else "wk_rest")
+            // Alternate rests: the coach reads your live vitals back to you.
+            restVitalsToggle = !restVitalsToggle
+            if (restVitalsToggle && hr > 0) {
+                val comment = when {
+                    zone >= 4 -> "Let it come down before we go again."
+                    zone == 3 -> "Right in the working zone."
+                    else -> "Nice and controlled."
+                }
+                host.sayLive("Heart rate $hr, zone $zone. $comment")
+            }
         }
+    }
+
+    private fun finish() {
+        phase = DONE; phaseT = 0f; u = 0f
+        host.sound(Sfx.FANFARE)
+        host.say("wk_done")
+
+        // Save the session and speak a personalized summary with live vitals.
+        val avgHr = if (hrN > 0) (hrSum / hrN).toInt() else 0
+        doneKcal = (program.met * 3.5f * weightKg() / 200f * (totalT / 60f)).toInt()
+        log.add(programIdx, level, totalT.toInt(), totalReps, avgHr, peakHr, doneKcal)
+        doneStreak = log.streakDays()
+        doneSessions = log.totalSessions()
+        doneLevelUp = level < 2 && log.completions(programIdx, level) >= 3
+
+        val mins = (totalT / 60f).toInt().coerceAtLeast(1)
+        val sb = StringBuilder("That's $mins minutes and about $doneKcal calories.")
+        if (avgHr > 0) sb.append(" Average heart rate $avgHr, peak $peakHr.")
+        if (doneStreak >= 2) sb.append(" You're on a $doneStreak day streak!")
+        if (doneLevelUp) sb.append(" You've mastered this level — try ${Levels.NAMES[level + 1].lowercase()} next time!")
+        host.sayLive(sb.toString())
     }
 
     // ------------------------------------------------------------ snapshot
@@ -174,6 +230,13 @@ class WorkoutSession(private val host: TrainerHost) {
         var totalReps = 0
         var countdown = 0               // GETSET seconds remaining, else 0
         var restLeft = 0                // REST seconds remaining, else 0
+        // DONE-screen stats (valid when phase == DONE)
+        var kcal = 0
+        var avgHr = 0
+        var peakHr = 0
+        var streak = 0
+        var sessions = 0
+        var levelUp = false
     }
 
     @Synchronized
@@ -205,5 +268,11 @@ class WorkoutSession(private val host: TrainerHost) {
         s.reps = reps
         s.repTarget = repTarget()
         s.timed = timed()
+        s.kcal = doneKcal
+        s.avgHr = if (hrN > 0) (hrSum / hrN).toInt() else 0
+        s.peakHr = peakHr
+        s.streak = doneStreak
+        s.sessions = doneSessions
+        s.levelUp = doneLevelUp
     }
 }
