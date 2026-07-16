@@ -97,15 +97,18 @@ object Exercises {
             pose { legs(hip = 45f, knee = 55f); spine(pitch = 10f); arms(pitch = 15f) }),
 
         // ------------------------------------------------ push / plank family
+        // Contact-solved: hands AND toes/knees rest on the floor at both ends
+        // of the rep (grounding translates but can't rotate, so each key's
+        // body pitch must put every support on the mat itself).
         Exercise("pushup", "PUSH-UPS", 2.4f, 90f, Db.NONE, t(0f, 0.45f, 0.6f),
-            pose { body(pitch = 88f); arms(pitch = 90f, elbow = 3f); head(-14f) },
-            pose { body(pitch = 88f); arms(pitch = 75f, elbow = 95f); head(-14f) },
-            pose { body(pitch = 88f); arms(pitch = 75f, elbow = 95f); head(-14f) }),
+            pose { body(pitch = 72f); arms(pitch = 90f, elbow = 3f); head(-14f) },
+            pose { body(pitch = 84f); arms(pitch = 75f, elbow = 95f); head(-14f) },
+            pose { body(pitch = 84f); arms(pitch = 75f, elbow = 95f); head(-14f) }),
 
         Exercise("knee_pushup", "KNEE PUSH-UPS", 2.4f, 90f, Db.NONE, t(0f, 0.45f, 0.6f),
-            pose { body(pitch = 82f); legs(hip = -6f, knee = 32f, ankle = 45f); arms(pitch = 90f, elbow = 3f); head(-14f) },
-            pose { body(pitch = 82f); legs(hip = -6f, knee = 32f, ankle = 45f); arms(pitch = 74f, elbow = 95f); head(-14f) },
-            pose { body(pitch = 82f); legs(hip = -6f, knee = 32f, ankle = 45f); arms(pitch = 74f, elbow = 95f); head(-14f) }),
+            pose { body(pitch = 62f); legs(hip = 28f, knee = 54f, ankle = 85f); arms(pitch = 66f, elbow = 3f); head(-14f) },
+            pose { body(pitch = 74f); legs(hip = 16f, knee = 40f, ankle = 85f); arms(pitch = 58f, elbow = 95f); head(-14f) },
+            pose { body(pitch = 74f); legs(hip = 16f, knee = 40f, ankle = 85f); arms(pitch = 58f, elbow = 95f); head(-14f) }),
 
         Exercise("plank", "PLANK", 4f, 90f, Db.NONE, t(0f, 0.5f),
             pose { body(pitch = 87f); arms(pitch = 92f, elbow = 90f); head(-16f) },
@@ -116,10 +119,10 @@ object Exercises {
             pose { body(roll = -79f); armL(abd = 84f, elbow = 88f); armR(abd = 92f); head(4f) }),
 
         Exercise("plank_jack", "PLANK JACKS", 0.9f, 90f, Db.NONE, t(0f, 0.25f, 0.5f, 0.75f),
-            pose { body(pitch = 88f); arms(pitch = 90f, elbow = 3f); head(-14f) },
-            pose { body(pitch = 88f); hop(0.05f); legs(abd = 12f); arms(pitch = 90f, elbow = 3f); head(-14f) },
-            pose { body(pitch = 88f); legs(abd = 24f); arms(pitch = 90f, elbow = 3f); head(-14f) },
-            pose { body(pitch = 88f); hop(0.05f); legs(abd = 12f); arms(pitch = 90f, elbow = 3f); head(-14f) }),
+            pose { body(pitch = 72f); arms(pitch = 90f, elbow = 3f); head(-14f) },
+            pose { body(pitch = 72f); hop(0.05f); legs(abd = 12f); arms(pitch = 90f, elbow = 3f); head(-14f) },
+            pose { body(pitch = 72f); legs(abd = 24f); arms(pitch = 90f, elbow = 3f); head(-14f) },
+            pose { body(pitch = 72f); hop(0.05f); legs(abd = 12f); arms(pitch = 90f, elbow = 3f); head(-14f) }),
 
         Exercise("mountain_climber", "MOUNTAIN CLIMBERS", 0.8f, 90f, Db.NONE, t(0f, 0.25f, 0.5f, 0.75f),
             pose { body(pitch = 82f); legL(hip = 95f, knee = 100f); legR(hip = 5f); arms(pitch = 90f, elbow = 3f); head(-12f) },
@@ -130,7 +133,7 @@ object Exercises {
         Exercise("burpee", "BURPEES", 3.6f, 30f, Db.NONE, t(0f, 0.18f, 0.36f, 0.55f, 0.72f, 0.85f),
             pose { arms(abd = 12f) },
             pose { legs(hip = 115f, knee = 125f); spine(pitch = 40f); arms(pitch = 70f); head(10f) },
-            pose { body(pitch = 86f); legs(hip = 5f, knee = 5f); spine(pitch = 4f); arms(pitch = 90f, elbow = 4f); head(-14f) },
+            pose { body(pitch = 72f); legs(hip = 5f, knee = 5f); spine(pitch = 4f); arms(pitch = 90f, elbow = 4f); head(-14f) },
             pose { legs(hip = 115f, knee = 125f); spine(pitch = 40f); arms(pitch = 70f); head(10f) },
             pose { hop(0.30f); arms(abd = 168f, elbow = 5f); legs(ankle = 25f); head(-8f) },
             pose { legs(hip = 25f, knee = 30f); arms(abd = 20f) }),
@@ -168,12 +171,12 @@ object Exercises {
             pose { body(pitch = -88f); legR(hip = 15f, knee = 8f); legL(hip = 90f, knee = 90f); armL(pitch = 165f); armR(pitch = 90f) }),
 
         Exercise("bird_dog", "BIRD DOG", 4.5f, 90f, Db.NONE, t(0f, 0.2f, 0.35f, 0.5f, 0.7f, 0.85f),
-            pose { body(pitch = 90f); legs(hip = 90f, knee = 90f); arms(pitch = 90f); head(-18f) },
-            pose { body(pitch = 90f); legL(hip = -8f, knee = 4f); legR(hip = 90f, knee = 90f); armR(pitch = 178f); armL(pitch = 90f); head(-18f) },
-            pose { body(pitch = 90f); legL(hip = -8f, knee = 4f); legR(hip = 90f, knee = 90f); armR(pitch = 178f); armL(pitch = 90f); head(-18f) },
-            pose { body(pitch = 90f); legs(hip = 90f, knee = 90f); arms(pitch = 90f); head(-18f) },
-            pose { body(pitch = 90f); legR(hip = -8f, knee = 4f); legL(hip = 90f, knee = 90f); armL(pitch = 178f); armR(pitch = 90f); head(-18f) },
-            pose { body(pitch = 90f); legR(hip = -8f, knee = 4f); legL(hip = 90f, knee = 90f); armL(pitch = 178f); armR(pitch = 90f); head(-18f) }),
+            pose { body(pitch = 90f); legs(hip = 90f, knee = 90f, ankle = 85f); arms(pitch = 112f, elbow = 42f); head(-18f) },
+            pose { body(pitch = 90f); legL(hip = -8f, knee = 4f, ankle = 40f); legR(hip = 90f, knee = 90f, ankle = 85f); armR(pitch = 178f); armL(pitch = 112f, elbow = 42f); head(-18f) },
+            pose { body(pitch = 90f); legL(hip = -8f, knee = 4f, ankle = 40f); legR(hip = 90f, knee = 90f, ankle = 85f); armR(pitch = 178f); armL(pitch = 112f, elbow = 42f); head(-18f) },
+            pose { body(pitch = 90f); legs(hip = 90f, knee = 90f, ankle = 85f); arms(pitch = 112f, elbow = 42f); head(-18f) },
+            pose { body(pitch = 90f); legR(hip = -8f, knee = 4f, ankle = 40f); legL(hip = 90f, knee = 90f, ankle = 85f); armL(pitch = 178f); armR(pitch = 112f, elbow = 42f); head(-18f) },
+            pose { body(pitch = 90f); legR(hip = -8f, knee = 4f, ankle = 40f); legL(hip = 90f, knee = 90f, ankle = 85f); armL(pitch = 178f); armR(pitch = 112f, elbow = 42f); head(-18f) }),
 
         Exercise("leg_raise", "LEG RAISES", 2.6f, 90f, Db.NONE, t(0f, 0.4f, 0.55f),
             pose { body(pitch = -88f); legs(hip = 8f, ankle = 35f); head(6f) },
@@ -231,8 +234,8 @@ object Exercises {
 
         // ------------------------------------------------ cool-down stretches
         Exercise("cat_cow", "CAT COW", 4f, 90f, Db.NONE, t(0f, 0.5f),
-            pose { body(pitch = 90f); legs(hip = 90f, knee = 90f); arms(pitch = 112f); spine(pitch = -22f); head(-30f) },
-            pose { body(pitch = 90f); legs(hip = 90f, knee = 90f); arms(pitch = 57f); spine(pitch = 35f); head(25f) }),
+            pose { body(pitch = 90f); legs(hip = 90f, knee = 90f, ankle = 85f); arms(pitch = 64f, elbow = 42f); spine(pitch = -22f); head(-30f) },
+            pose { body(pitch = 90f); legs(hip = 90f, knee = 90f, ankle = 85f); arms(pitch = 124f, elbow = 85f); spine(pitch = 24f); head(25f) }),
 
         Exercise("cobra", "COBRA STRETCH", 5f, 90f, Db.NONE, t(0f, 0.45f, 0.65f),
             pose { body(pitch = 88f); spine(pitch = -5f); arms(pitch = 55f, elbow = 85f); head(-10f) },

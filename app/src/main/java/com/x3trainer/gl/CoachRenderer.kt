@@ -363,13 +363,14 @@ class CoachRenderer(private val engine: Trainer) : GLSurfaceView.Renderer {
             }
         }
 
-        // Bottom-left: live heart rate in its zone color (same data as the HUD).
+        // Bottom vitals strip: large, centered, zone-colored, with a heart
+        // pulsing at the live rate — readable from any floor exercise.
         val hr = engine.hr; val zone = engine.zone
-        if (hr != lastHr || zone != lastZone) {
-            lastHr = hr; lastZone = zone
-            hrStr = if (hr > 0) hr.toString() + "BPM Z" + zone else "--BPM"
-        }
         if (hr > 0) {
+            if (hr != lastHr || zone != lastZone) {
+                lastHr = hr; lastZone = zone
+                hrStr = hr.toString() + " BPM  ZONE " + zone
+            }
             val zr: Float; val zg: Float; val zb: Float
             when (zone) {
                 1 -> { zr = 0.5f; zg = 0.8f; zb = 1f }
@@ -378,8 +379,22 @@ class CoachRenderer(private val engine: Trainer) : GLSurfaceView.Renderer {
                 4 -> { zr = 1f; zg = 0.6f; zb = 0.3f }
                 else -> { zr = 1f; zg = 0.35f; zb = 0.3f }
             }
-            text(hrStr, 16f, 474f, 1.1f, zr, zg, zb)
+            val beat = 0.5f + 0.5f * sin(t * hr / 60f * 6.2832f)
+            val cx = 336f
+            textC(hrStr, cx, 478f, 1.8f, zr, zg, zb, 0.95f)
+            heart(cx - StrokeFont.width(hrStr, 1.8f) / 2f - 18f, 471f,
+                7f + 2.5f * beat, zr, zg, zb, 0.55f + 0.45f * beat)
         }
+    }
+
+    /** A small stroke heart at (cx, cy), beating with the live pulse. */
+    private fun heart(cx: Float, cy: Float, s: Float, r: Float, g: Float, b: Float, a: Float) {
+        hud.line(cx, cy + s, 0f, cx - s, cy - s * 0.25f, 0f, r, g, b, a)
+        hud.line(cx - s, cy - s * 0.25f, 0f, cx - s * 0.55f, cy - s, 0f, r, g, b, a)
+        hud.line(cx - s * 0.55f, cy - s, 0f, cx, cy - s * 0.45f, 0f, r, g, b, a)
+        hud.line(cx, cy - s * 0.45f, 0f, cx + s * 0.55f, cy - s, 0f, r, g, b, a)
+        hud.line(cx + s * 0.55f, cy - s, 0f, cx + s, cy - s * 0.25f, 0f, r, g, b, a)
+        hud.line(cx + s, cy - s * 0.25f, 0f, cx, cy + s, 0f, r, g, b, a)
     }
 
     // -------------------------------------------------------------- plumbing
