@@ -3,6 +3,7 @@ package com.x3trainer
 import android.Manifest
 import android.app.Activity
 import android.content.pm.PackageManager
+import android.opengl.GLSurfaceView
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
@@ -15,10 +16,12 @@ import android.view.View
 import android.view.WindowInsets
 import android.view.WindowInsetsController
 import android.view.WindowManager
+import android.widget.FrameLayout
 import com.x3trainer.audio.CoachVoice
 import com.x3trainer.audio.Sfx
 import com.x3trainer.engine.Trainer
 import com.x3trainer.engine.TrainerHost
+import com.x3trainer.gl.CoachRenderer
 import com.x3trainer.telemetry.BleSource
 import com.x3trainer.telemetry.DemoSource
 import com.x3trainer.telemetry.TelemetrySource
@@ -48,6 +51,8 @@ class MainActivity : Activity(), TrainerHost {
     private lateinit var renderer: Renderer
     private lateinit var hudView: HudView
     private lateinit var sbsRoot: BinocularSbsLayout
+    private lateinit var glView: GLSurfaceView
+    private var glActive = false
 
     private val handler = Handler(Looper.getMainLooper())
     private var telemetry: TelemetrySource? = null
@@ -74,7 +79,23 @@ class MainActivity : Activity(), TrainerHost {
         renderer = Renderer(engine, store)
         hudView = HudView(this, engine, renderer)
         sbsRoot = BinocularSbsLayout(this).apply { addView(hudView) }
-        setContentView(sbsRoot)
+
+        // The mat-coach: a GL surface that sits under the HUD view and is
+        // revealed only while a workout runs. The engine keeps ticking on the
+        // main thread (HudView's Choreographer); the GL renderer only reads.
+        glView = GLSurfaceView(this).apply {
+            setEGLContextClientVersion(3)
+            preserveEGLContextOnPause = true
+            setRenderer(CoachRenderer(engine))
+            renderMode = GLSurfaceView.RENDERMODE_CONTINUOUSLY
+            visibility = View.GONE
+        }
+        glView.onPause()
+
+        val root = FrameLayout(this)
+        root.addView(glView)
+        root.addView(sbsRoot)
+        setContentView(root)
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         hideSystemBars()
         applySettings()
@@ -88,6 +109,22 @@ class MainActivity : Activity(), TrainerHost {
         voice.volume = store.voiceVolume / 10f
         sbsRoot.sbsEnabled = store.sbs
         Log.i(TAG, "applySettings sbs=${store.sbs} src=${store.dataSource}")
+    }
+
+    override fun workoutSurface(active: Boolean) {
+        runOnUiThread {
+            if (active == glActive) return@runOnUiThread
+            glActive = active
+            if (active) {
+                glView.visibility = View.VISIBLE
+                glView.onResume()
+                sbsRoot.visibility = View.GONE
+            } else {
+                glView.onPause()
+                glView.visibility = View.GONE
+                sbsRoot.visibility = View.VISIBLE
+            }
+        }
     }
 
     override fun sound(id: Int, pitch: Float, vol: Float) = sfx.play(id, pitch, vol)
@@ -228,12 +265,14 @@ class MainActivity : Activity(), TrainerHost {
         hideSystemBars()
         applySettings()
         hudView.start()
+        if (glActive) glView.onResume()
         if (telemetry == null && store.disclaimerAccepted) rebindTelemetry()
     }
 
     override fun onPause() {
         engine.onAppPause()
         hudView.stop()
+        if (glActive) glView.onPause()
         telemetry?.stop()
         telemetry = null
         super.onPause()

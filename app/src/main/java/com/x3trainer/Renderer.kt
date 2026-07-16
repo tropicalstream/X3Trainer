@@ -7,6 +7,8 @@ import android.graphics.Typeface
 import com.x3trainer.engine.AppState
 import com.x3trainer.engine.HrZones
 import com.x3trainer.engine.Trainer
+import com.x3trainer.workout.Levels
+import com.x3trainer.workout.Programs
 import kotlin.math.sin
 
 /**
@@ -42,6 +44,8 @@ class Renderer(private val engine: Trainer, private val store: SettingsStore) {
             AppState.DISCLAIMER -> drawDisclaimer(canvas)
             AppState.SETTINGS -> drawSettings(canvas)
             AppState.HUD -> drawHud(canvas)
+            AppState.WORKOUT_MENU -> drawWorkoutMenu(canvas)
+            AppState.WORKOUT -> { /* GL surface owns the screen */ }
         }
         canvas.restore()
     }
@@ -117,6 +121,10 @@ class Renderer(private val engine: Trainer, private val store: SettingsStore) {
         paint.textSize = 12f
         paint.color = Color.rgb(110, 120, 135)
         c.drawText(engine.sourceStatus, 8f, H - 8f, paint)
+
+        // Mat-coach hint, equally tiny, bottom-right.
+        paint.textAlign = Paint.Align.RIGHT
+        c.drawText("swipe up: mat coach", W - 8f, H - 8f, paint)
     }
 
     /** Transient center-view content only: celebrations, warnings, red frame. */
@@ -188,6 +196,53 @@ class Renderer(private val engine: Trainer, private val store: SettingsStore) {
             if (line.isNotEmpty()) c.drawText(line, W / 2f, y, paint)
             y += size * 1.35f
         }
+    }
+
+    // --------------------------------------------------------- workout menu
+
+    private fun drawWorkoutMenu(c: Canvas) {
+        paint.typeface = mono
+        paint.textAlign = Paint.Align.CENTER
+        paint.textSize = 26f
+        paint.color = Color.rgb(120, 220, 255)
+        c.drawText("MAT COACH", W / 2f, 44f, paint)
+        paint.textSize = 12f
+        paint.color = Color.rgb(140, 150, 165)
+        c.drawText("swipe up/down = program · left/right = level · tap = start · double-tap = back", W / 2f, 66f, paint)
+
+        // Level selector.
+        paint.textSize = 20f
+        paint.color = Color.rgb(255, 230, 120)
+        c.drawText("< ${Levels.NAMES[engine.wkLevel]} >", W / 2f, 100f, paint)
+
+        // Program list with the selection expanded.
+        var y = 140f
+        for ((i, p) in Programs.ALL.withIndex()) {
+            val sel = i == engine.wkProgram
+            paint.textAlign = Paint.Align.LEFT
+            paint.textSize = if (sel) 22f else 17f
+            paint.color = if (sel) Color.WHITE else Color.rgb(170, 178, 190)
+            c.drawText((if (sel) "> " else "  ") + p.name, 70f, y, paint)
+            paint.textAlign = Paint.Align.RIGHT
+            paint.textSize = 15f
+            paint.color = if (sel) Color.rgb(120, 255, 150) else Color.rgb(120, 128, 140)
+            val mins = p.estimateMin(engine.wkLevel)
+            c.drawText("${p.steps.size} moves · ~$mins min", W - 70f, y, paint)
+            if (sel) {
+                y += 24f
+                paint.textAlign = Paint.Align.LEFT
+                paint.textSize = 14f
+                paint.color = Color.rgb(160, 200, 255)
+                c.drawText(p.tagline + if (p.weights) "  —  DUMBBELLS NEEDED" else "", 88f, y, paint)
+            }
+            y += 34f
+        }
+
+        val blink = 0.6f + 0.4f * sin(engine.time * 4f)
+        paint.textAlign = Paint.Align.CENTER
+        paint.textSize = 18f
+        paint.color = Color.argb((255 * blink).toInt(), 120, 255, 150)
+        c.drawText("TAP TO START", W / 2f, H - 24f, paint)
     }
 
     // ------------------------------------------------------------- settings

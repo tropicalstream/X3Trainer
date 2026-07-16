@@ -5,8 +5,10 @@ import com.x3trainer.SettingsStore
 import com.x3trainer.audio.Sfx
 import com.x3trainer.telemetry.TelemetrySample
 import com.x3trainer.telemetry.TelemetrySource
+import com.x3trainer.workout.Programs
+import com.x3trainer.workout.WorkoutSession
 
-enum class AppState { DISCLAIMER, HUD, SETTINGS }
+enum class AppState { DISCLAIMER, HUD, SETTINGS, WORKOUT_MENU, WORKOUT }
 
 /** What the engine needs from the Activity. */
 interface TrainerHost {
@@ -15,6 +17,8 @@ interface TrainerHost {
     fun say(id: String, urgent: Boolean = false)
     /** (Re)build the telemetry source for the current settings choice. */
     fun rebindTelemetry()
+    /** Show/hide the GL mat-coach surface (true while state == WORKOUT). */
+    fun workoutSurface(active: Boolean)
 }
 
 /**
@@ -31,6 +35,11 @@ class Trainer(val store: SettingsStore, val host: TrainerHost) : TimerEvents, Te
     val timer = SportsTimer(store, this)
     val coach = CoachEngine(store) { id, urgent -> host.say(id, urgent) }
     val menu = TrainerMenu(this, store)
+    val workout = WorkoutSession(host)
+
+    // Workout picker selection (state == WORKOUT_MENU).
+    var wkProgram = 0; private set
+    var wkLevel = 1; private set
 
     // --- live telemetry (normalized) ---
     var hr = 0; private set
@@ -68,6 +77,7 @@ class Trainer(val store: SettingsStore, val host: TrainerHost) : TimerEvents, Te
         if (state == AppState.HUD) {
             coach.update(dt, timer.running, timer.elapsed, hr, zone, cadence, deltaV)
         }
+        if (state == AppState.WORKOUT) workout.update(dt)
         if (warningFlash > 0f) warningFlash = maxOf(0f, warningFlash - dt * 0.5f)
         if (warningText != null && time > warningUntil) warningText = null
         if (pendingMode != null && time > pendingUntil) {
@@ -108,6 +118,8 @@ class Trainer(val store: SettingsStore, val host: TrainerHost) : TimerEvents, Te
                 else if (!timer.finished) { host.sound(Sfx.PAUSE); host.say("timer_paused") }
             }
             AppState.SETTINGS -> menu.activate()
+            AppState.WORKOUT_MENU -> startWorkout()
+            AppState.WORKOUT -> if (workout.isDone()) endWorkout() else workout.togglePause()
         }
     }
 
@@ -121,14 +133,24 @@ class Trainer(val store: SettingsStore, val host: TrainerHost) : TimerEvents, Te
                 host.say("timer_reset")
             }
             AppState.SETTINGS -> closeSettings()
+            AppState.WORKOUT_MENU -> { state = AppState.HUD; host.sound(Sfx.CANCEL) }
+            AppState.WORKOUT ->
+                if (workout.isDone() || workout.isPaused()) endWorkout() else workout.skip()
         }
     }
 
     fun tripleTap() {
         when (state) {
             AppState.DISCLAIMER -> {}
-            AppState.HUD -> {
+            AppState.HUD, AppState.WORKOUT_MENU -> {
                 state = AppState.SETTINGS
+                menu.onOpen()
+                host.sound(Sfx.SELECT)
+            }
+            AppState.WORKOUT -> {
+                workout.pause()
+                state = AppState.SETTINGS
+                host.workoutSurface(false)
                 menu.onOpen()
                 host.sound(Sfx.SELECT)
             }
@@ -137,9 +159,37 @@ class Trainer(val store: SettingsStore, val host: TrainerHost) : TimerEvents, Te
     }
 
     fun closeSettings() {
-        state = AppState.HUD
+        state = if (workout.active) AppState.WORKOUT else AppState.HUD
+        host.workoutSurface(state == AppState.WORKOUT)
         host.sound(Sfx.SELECT)
         host.applySettings()
+    }
+
+    // ------------------------------------------------------- mat workout
+
+    fun openWorkoutMenu() {
+        if (workout.active) workout.end()
+        wkProgram = store.workoutProgram
+        wkLevel = store.workoutLevel
+        state = AppState.WORKOUT_MENU
+        host.workoutSurface(false)
+        host.sound(Sfx.SELECT)
+    }
+
+    private fun startWorkout() {
+        store.workoutProgram = wkProgram
+        store.workoutLevel = wkLevel
+        state = AppState.WORKOUT
+        host.workoutSurface(true)
+        host.sound(Sfx.GO)
+        workout.start(wkProgram, wkLevel)
+    }
+
+    fun endWorkout() {
+        workout.end()   // says the early-exit line only if the workout wasn't finished
+        state = AppState.HUD
+        host.workoutSurface(false)
+        host.sound(Sfx.SELECT)
     }
 
     /** dir: 0 up, 1 down, 2 left, 3 right (one discrete step per gesture). */
@@ -156,19 +206,37 @@ class Trainer(val store: SettingsStore, val host: TrainerHost) : TimerEvents, Te
                     pendingMode = next
                     pendingUntil = time + 4f
                     host.sound(Sfx.CONFIRM)
+                } else {
+                    // Swipe up/down: open the mat-coach workout picker.
+                    openWorkoutMenu()
                 }
             }
+            AppState.WORKOUT_MENU -> {
+                val n = Programs.ALL.size
+                when (dir) {
+                    0 -> { wkProgram = (wkProgram + n - 1) % n; host.sound(Sfx.TICK) }
+                    1 -> { wkProgram = (wkProgram + 1) % n; host.sound(Sfx.TICK) }
+                    2 -> { wkLevel = (wkLevel + 2) % 3; host.sound(Sfx.TICK, 1.3f) }
+                    3 -> { wkLevel = (wkLevel + 1) % 3; host.sound(Sfx.TICK, 1.3f) }
+                }
+            }
+            AppState.WORKOUT -> {}
         }
     }
 
     fun onBack(): Boolean {
-        if (state == AppState.SETTINGS) { closeSettings(); return true }
-        return false
+        when (state) {
+            AppState.SETTINGS -> { closeSettings(); return true }
+            AppState.WORKOUT -> { endWorkout(); return true }
+            AppState.WORKOUT_MENU -> { state = AppState.HUD; host.sound(Sfx.CANCEL); return true }
+            else -> return false
+        }
     }
 
     fun onAppPause() {
         // Keep it simple and honest: pause the workout clock with the app.
         if (timer.running) timer.toggle()
+        workout.pause()
     }
 
     // -------------------------------------------------------- timer events

@@ -70,6 +70,38 @@ python3 tools/generate_tts.py
 Until clips are generated the app falls back to Android TTS (pitched up), so
 it works out of the box — but generate the real voice before release.
 
+## The mat coach (3D vector skeleton)
+
+**Swipe up** from the HUD to open the **MAT COACH** — a full-body OpenGL ES 3
+vector-skeleton coach who *performs every exercise with you* on a glowing
+neon mat: a 20-joint forward-kinematics rig, keyframe-animated, auto-grounded
+so squats sink, push-ups lower, and glute bridges lift like the real
+movement. Dumbbell moves render the dumbbells in the coach's hands.
+
+Six programs built from the most popular single-mat circuits, each at
+**beginner / intermediate / advanced** (reps, seconds, rest, and classic
+substitutions scale — knee push-ups become push-ups, squats become squat
+jumps):
+
+- **FULL BODY START** — jacks, squats, push-ups, bridge, bird dog, dead bug, plank
+- **CORE CRUSHER** — crunches, bicycles, leg raises, russian twists, superman, side plank, plank
+- **HIIT SWEAT** — jacks, high knees, squat jumps, mountain climbers, plank jacks, burpees
+- **DUMBBELL POWER** — goblet squats, rows, floor press, RDLs, presses, curls, raises, weighted twists
+- **LOWER BODY BURN** — squats, lunges, bridges, RDLs, squat jumps, plank
+- **COOL-DOWN FLOW** — cat cow, cobra, downward dog, child's pose
+
+Flow: a 5-second **GET READY** (the coach demos the first move at slow
+tempo) → **WORK** (rep ticks count with the coach's cycles; timed holds count
+down with 3-2-1 beeps) → **REST** (the coach previews the next move slowly)
+→ … → a victory pose and session summary. The voice coach announces each
+exercise with a form cue, always at phase boundaries — never over a rep. Live
+HR stays on screen in its zone color throughout.
+
+In-workout controls: **tap** pause/resume · **double tap** skip exercise
+(while paused: end workout) · **triple tap** settings. The workout is
+stationary mat training, so this mode intentionally uses the center of view —
+the empty-sightline contract applies to outdoor HUD training.
+
 ## Telemetry sources
 
 Set in Settings → Data Source:
@@ -104,13 +136,13 @@ glasses guide) is shown once. Tap to accept and continue.
 
 ## Controls summary
 
-| Gesture | HUD | Settings |
-|---|---|---|
-| Single tap | Start/pause timer (or confirm pending mode switch) | Activate item |
-| Double tap | Reset timer (or cancel pending switch) | Back to HUD |
-| Triple tap | Open settings | Close settings |
-| Swipe left/right | Propose previous/next timer type (tap to confirm) | Adjust value |
-| Swipe up/down | — | Move selection |
+| Gesture | HUD | Workout picker / workout | Settings |
+|---|---|---|---|
+| Single tap | Start/pause timer (or confirm pending mode switch) | Start workout / pause-resume | Activate item |
+| Double tap | Reset timer (or cancel pending switch) | Back / skip exercise (paused: end) | Back |
+| Triple tap | Open settings | Open settings | Close settings |
+| Swipe left/right | Propose previous/next timer type (tap to confirm) | Change level | Adjust value |
+| Swipe up/down | Open the mat coach | Change program | Move selection |
 
 ## Build & install
 

@@ -117,6 +117,18 @@ class SettingsStore(context: Context) {
         get() = p.getFloat("swipeSens", 1.0f)
         set(v) { p.edit().putFloat("swipeSens", v.coerceIn(0.4f, 2.5f)).apply() }
 
+    // --- mat-coach workout ---
+
+    /** Last selected workout program index. */
+    var workoutProgram: Int
+        get() = p.getInt("wkProgram", 0)
+        set(v) { p.edit().putInt("wkProgram", v.coerceAtLeast(0)).apply() }
+
+    /** Last selected workout level: 0 beginner, 1 intermediate, 2 advanced. */
+    var workoutLevel: Int
+        get() = p.getInt("wkLevel", 0)
+        set(v) { p.edit().putInt("wkLevel", v.coerceIn(0, 2)).apply() }
+
     var sbs: Boolean
         get() = p.getBoolean("sbs", isRayNeoX3)
         set(v) { p.edit().putBoolean("sbs", v).apply() }
@@ -130,6 +142,7 @@ class SettingsStore(context: Context) {
             .remove("cdMin").remove("intWork").remove("intRest").remove("intRounds")
             .remove("emomMin").remove("amrapMin").remove("timerMode")
             .remove("swipeSens").remove("sbs")
+            .remove("wkProgram").remove("wkLevel")
             .apply()
     }
 }
