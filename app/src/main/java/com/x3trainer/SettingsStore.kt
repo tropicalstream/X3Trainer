@@ -26,20 +26,13 @@ class SettingsStore(context: Context) {
         get() = p.getBoolean("disclaimerOk", false)
         set(v) { p.edit().putBoolean("disclaimerOk", v).apply() }
 
-    /**
-     * 0 Demo, 1 HR Broadcast (standard BLE Heart Rate service — Apple Watch
-     * via a broadcaster app like HeartCast, or any chest strap / sport watch
-     * that broadcasts natively). The X3 Pro's consumer pairing is locked to
-     * its companion phone, but standard HR broadcast is connectionless and
-     * needs no pairing; whether app-level BLE scanning works on the glasses
-     * is unverified — BleSource doubles as the on-device test.
-     */
+    /** 0 Demo, 1 live BLE sensor / X3Trainer Active2 broadcaster. Live is the default. */
     var dataSource: Int
-        get() = p.getInt("dataSource", 0)
+        get() = p.getInt("dataSource", 1)
         set(v) { p.edit().putInt("dataSource", ((v % 2) + 2) % 2).apply() }
 
     val dataSourceLabel: String
-        get() = if (dataSource == 1) "HR Broadcast (BLE)" else "Demo"
+        get() = if (dataSource == 1) "Active2 Direct" else "Demo (simulated)"
 
     /** Max heart rate used for zone math. */
     var maxHr: Int

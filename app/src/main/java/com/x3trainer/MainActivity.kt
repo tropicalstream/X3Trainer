@@ -24,6 +24,7 @@ import com.x3trainer.engine.TrainerHost
 import com.x3trainer.gl.CoachRenderer
 import com.x3trainer.telemetry.BleSource
 import com.x3trainer.telemetry.DemoSource
+import com.x3trainer.telemetry.StatusSource
 import com.x3trainer.telemetry.TelemetrySource
 import com.x3trainer.workout.WorkoutLog
 import kotlin.math.abs
@@ -141,7 +142,7 @@ class MainActivity : Activity(), TrainerHost {
         telemetry = when (store.dataSource) {
             1 -> {
                 if (ensureBlePermissions()) BleSource(this)
-                else DemoSource() // permissions pending; user re-selects after grant
+                else StatusSource("ALLOW BLUETOOTH", "BLUETOOTH PERMISSION REQUIRED")
             }
             else -> DemoSource()
         }
@@ -159,7 +160,7 @@ class MainActivity : Activity(), TrainerHost {
 
     override fun onRequestPermissionsResult(code: Int, perms: Array<out String>, res: IntArray) {
         super.onRequestPermissionsResult(code, perms, res)
-        if (code == 71 && res.all { it == PackageManager.PERMISSION_GRANTED }) rebindTelemetry()
+        if (code == 71) rebindTelemetry()
     }
 
     // --------------------------------------------------------------- input

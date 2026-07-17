@@ -32,7 +32,7 @@ import java.util.UUID
  * unverified (its consumer pairing is phone-only, but HR broadcast needs no
  * pairing). This class is deliberately also the on-device test: failure
  * surfaces as a scan warning, never a crash. If scanning proves blocked, a
- * phone-relay TelemetrySource is the fallback design.
+ * the X3Trainer Active2 broadcaster supplies the standard profile directly.
  *
  * Permission checks live in MainActivity; every call here is wrapped so a
  * revoked permission degrades to a device warning instead of a crash.
@@ -146,7 +146,14 @@ class BleSource(private val context: Context) : TelemetrySource {
                 // a small delay is the dependency-free way.
                 handler.postDelayed({ enableNotify(g, it) }, 700L)
             }
-            listener?.onStatus(if (found) "CONNECTED" else "NO HR SERVICE")
+            if (found) {
+                // Start the stale clock at connection time. A connected relay that never
+                // produces a fresh health sample must not look healthy indefinitely.
+                lastPacketAt = SystemClock.uptimeMillis()
+                listener?.onStatus("ACTIVE2 DIRECT")
+            } else {
+                listener?.onStatus("NO HR SERVICE")
+            }
         }
 
         override fun onCharacteristicChanged(g: BluetoothGatt, ch: BluetoothGattCharacteristic) {
@@ -185,7 +192,8 @@ class BleSource(private val context: Context) : TelemetrySource {
         if (d.size < 4) return
         val rawSpeed = ((d[2].toInt() and 0xFF) shl 8) or (d[1].toInt() and 0xFF)
         speed = rawSpeed / 256f
-        cadence = (d[3].toInt() and 0xFF) * 2 // RSC reports strides/min; steps = ×2
+        // Bluetooth SIG RSC cadence is already expressed in 1/minute.
+        cadence = d[3].toInt() and 0xFF
     }
 
     override fun stop() {

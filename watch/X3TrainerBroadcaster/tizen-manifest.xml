@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns="http://tizen.org/ns/packages" api-version="5.5" package="org.example.x3trainerbroadcaster" version="1.0.0">
+	<profile name="wearable" />
+	<ui-application appid="org.example.x3trainerbroadcaster" exec="x3trainerbroadcaster" type="capp" multiple="false" taskmanage="true" nodisplay="false">
+		<icon>x3trainerbroadcaster.png</icon>
+		<label>X3Trainer Direct</label>
+		<background-category value="sensor" />
+	</ui-application>
+	<features>
+		<feature name="http://tizen.org/feature/network.bluetooth.le" />
+		<feature name="http://tizen.org/feature/sensor.heart_rate_monitor" />
+		<feature name="http://tizen.org/feature/sensor.pedometer" />
+	</features>
+	<privileges>
+		<privilege>http://tizen.org/privilege/bluetooth</privilege>
+		<privilege>http://tizen.org/privilege/healthinfo</privilege>
+		<privilege>http://tizen.org/privilege/display</privilege>
+	</privileges>
+</manifest>

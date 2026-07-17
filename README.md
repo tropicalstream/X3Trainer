@@ -125,9 +125,13 @@ the empty-sightline contract applies to outdoor HUD training.
 
 Set in Settings → Data Source:
 
-- **Demo** (default) — a simulated workout that sweeps through the HR zones;
+- **Active2 Direct** (default) — receives live heart rate and cadence straight
+  from the X3Trainer Broadcaster installed on the Galaxy Watch Active2. The
+  watch exposes standard Bluetooth Heart Rate and RSC services; no phone relay,
+  Samsung Health polling, account, cloud, or Internet connection is involved.
+- **Demo (simulated)** — a simulated workout that sweeps through the HR zones;
   lets you exercise the HUD, coach, and timers with no sensor.
-- **HR Broadcast (BLE)** — listens for the standard Bluetooth **Heart Rate
+- The live source also listens for the standard Bluetooth **Heart Rate
   service** (0x180D) and, when present, **Running Speed & Cadence** (0x1814).
   Works with chest straps and sport watches that broadcast natively
   (Garmin/Polar style). **Apple Watch:** the Watch never exposes HR over
@@ -135,12 +139,10 @@ Set in Settings → Data Source:
   health data — run a broadcaster app on the Watch (e.g. HeartCast) and it
   becomes a standard HR peripheral this app can read.
 
-> **Hardware honesty:** the X3 Pro's consumer pairing is locked to its
-> companion phone, and whether third-party apps may use BLE central scanning
-> on-device is unverified. Standard HR broadcast requires **no pairing**, so
-> it may well work — this app is itself the test. If scanning is blocked the
-> app degrades to a "CHECK DEVICE" warning, and a phone-relay telemetry
-> source is the planned fallback.
+> **Hardware honesty:** the direct Active2 broadcaster requires Tizen's BLE
+> GATT-server feature on the installed watch firmware. X3Trainer reports scan,
+> connection, and stale-data failures explicitly and never substitutes demo
+> numbers while the live source is selected.
 
 If the telemetry device raises a problem (signal lost, Bluetooth off, stale
 data), the **screen frame flashes red** and a **CHECK DEVICE** message
