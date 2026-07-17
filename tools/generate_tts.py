@@ -41,11 +41,16 @@ API_URL = "https://api.fish.audio/v1/tts"
 # (timer, coaching, HIIT/strength cues) keeps the enthusiastic coach. Delete a
 # clip and re-run to regenerate it with whatever model maps here now.
 SOOTHING_IDS = {
+    # yoga & stretching exercise cues
     "cue_mountain_reach", "cue_forward_fold", "cue_chair", "cue_warrior",
     "cue_triangle", "cue_tree", "cue_neck_rolls", "cue_shoulder_cross",
     "cue_tricep_overhead", "cue_quad_stretch", "cue_seated_fold", "cue_butterfly",
     "cue_figure_four", "cue_hip_flexor_lunge", "cue_cat_cow", "cue_cobra",
     "cue_downward_dog", "cue_childs_pose",
+    # calm-program flow lines (rest/done/etc.) so the whole track is one voice
+    "wk_ready_calm", "wk_rest_calm", "wk_last_calm", "wk_done_calm",
+    "wk_skip_calm", "wk_resume_calm", "wk_end_early_calm", "timer_paused_calm",
+    "halfway_calm",
 }
 
 

@@ -56,6 +56,14 @@ class WorkoutSession(
     private var doneSessions = 0
     private var doneLevelUp = false
 
+    /**
+     * A flow line, routed to the soothing voice on calm programs: yoga and
+     * stretching sessions speak the "_calm" clip of every session line so the
+     * whole track stays in one voice. Non-calm programs use the base id.
+     */
+    private fun say(id: String, urgent: Boolean = false) =
+        host.say(if (program.calm) id + "_calm" else id, urgent)
+
     private fun step() = program.steps[stepIdx]
     private fun exId() = step().ex[level]
     private fun repTarget() = step().reps?.get(level) ?: 0
@@ -73,13 +81,13 @@ class WorkoutSession(
         getsetCueSaid = false
         hrSum = 0; hrN = 0; peakHr = 0; restVitalsToggle = false; doneLevelUp = false
         active = true
-        host.say("wk_ready")
-        if (program.met >= 5f) host.say("wk_warmup")
+        say("wk_ready")
+        if (program.met >= 5f) say("wk_warmup")
     }
 
     @Synchronized
     fun end() {
-        if (active && phase != DONE) host.say("wk_end_early")
+        if (active && phase != DONE) say("wk_end_early")
         active = false; phase = OFF
     }
 
@@ -88,7 +96,7 @@ class WorkoutSession(
         if (!active || phase == DONE) return
         paused = !paused
         host.sound(if (paused) Sfx.PAUSE else Sfx.START)
-        host.say(if (paused) "timer_paused" else "wk_resume")
+        say(if (paused) "timer_paused" else "wk_resume")
     }
 
     @Synchronized fun isPaused() = paused
@@ -101,7 +109,7 @@ class WorkoutSession(
     fun skip() {
         if (!active || phase == DONE || paused) return
         host.sound(Sfx.CONFIRM)
-        host.say("wk_skip", urgent = true)
+        say("wk_skip", urgent = true)
         advance(fromSkip = true)
     }
 
@@ -137,7 +145,7 @@ class WorkoutSession(
                     countdownBeeps(secTarget().toFloat())
                     if (!saidHalf && secTarget() >= 25 && phaseT >= secTarget() / 2f) {
                         saidHalf = true
-                        host.say("halfway")
+                        say("halfway")
                     }
                     if (phaseT >= secTarget()) { totalReps++; advance() }
                 } else {
@@ -187,10 +195,11 @@ class WorkoutSession(
         phase = REST; phaseT = 0f; u = 0f; lastBeepSec = -1
         if (!fromSkip) {
             host.sound(Sfx.DING)
-            host.say(if (stepIdx == program.steps.size - 1) "wk_last" else "wk_rest")
+            say(if (stepIdx == program.steps.size - 1) "wk_last" else "wk_rest")
             // Alternate rests: the coach reads your live vitals back to you.
+            // Suppressed on calm programs — the dynamic TTS is a different voice.
             restVitalsToggle = !restVitalsToggle
-            if (restVitalsToggle && hr > 0) {
+            if (!program.calm && restVitalsToggle && hr > 0) {
                 val comment = when {
                     zone >= 4 -> "Let it come down before we go again."
                     zone == 3 -> "Right in the working zone."
@@ -204,9 +213,9 @@ class WorkoutSession(
     private fun finish() {
         phase = DONE; phaseT = 0f; u = 0f
         host.sound(Sfx.FANFARE)
-        host.say("wk_done")
+        say("wk_done")
 
-        // Save the session and speak a personalized summary with live vitals.
+        // Save the session; the DONE screen still shows the stats visually.
         val avgHr = if (hrN > 0) (hrSum / hrN).toInt() else 0
         doneKcal = (program.met * 3.5f * weightKg() / 200f * (totalT / 60f)).toInt()
         log.add(programIdx, level, totalT.toInt(), totalReps, avgHr, peakHr, doneKcal)
@@ -214,6 +223,9 @@ class WorkoutSession(
         doneSessions = log.totalSessions()
         doneLevelUp = level < 2 && log.completions(programIdx, level) >= 3
 
+        // The spoken summary is dynamic TTS (a different voice) — skip it on
+        // calm programs; wk_done_calm already closes the session in one voice.
+        if (program.calm) return
         val mins = (totalT / 60f).toInt().coerceAtLeast(1)
         val sb = StringBuilder("That's $mins minutes and about $doneKcal calories.")
         if (avgHr > 0) sb.append(" Average heart rate $avgHr, peak $peakHr.")

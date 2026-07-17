@@ -24,6 +24,12 @@ class Program(
     val met: Float,
     val restSec: IntArray,
     val steps: List<Step>,
+    /**
+     * A calm yoga/stretching program: the whole voice track — cues AND the
+     * flow lines (rest, done, halfway…) — uses only the soothing voice, and the
+     * peppy spoken-vitals callouts are suppressed, so it never mixes voices.
+     */
+    val calm: Boolean = false,
 ) {
     /** Rough total minutes at a level, for the picker. */
     fun estimateMin(level: Int): Int {
@@ -116,7 +122,8 @@ object Programs {
                 Step(Exercises.DOWNWARD_DOG, secs = r(20, 30, 40)),
                 Step(Exercises.TREE, secs = r(32, 45, 60)),
                 Step(Exercises.CHILDS_POSE, secs = r(30, 40, 50)),
-            )
+            ),
+            calm = true,
         ),
         Program(
             "FULL STRETCH", "Head-to-toe general stretching", false, 2.5f, r(10, 10, 10),
@@ -130,7 +137,8 @@ object Programs {
                 Step(Exercises.BUTTERFLY, secs = r(30, 40, 50)),
                 Step(Exercises.FIGURE_FOUR, secs = r(32, 45, 60)),
                 Step(Exercises.COBRA, secs = r(20, 30, 40)),
-            )
+            ),
+            calm = true,
         ),
         Program(
             "COOL-DOWN FLOW", "Gentle stretches to finish any session", false, 2.5f, r(10, 10, 10),
@@ -139,7 +147,8 @@ object Programs {
                 Step(Exercises.COBRA, secs = r(20, 30, 40)),
                 Step(Exercises.DOWNWARD_DOG, secs = r(20, 30, 40)),
                 Step(Exercises.CHILDS_POSE, secs = r(30, 40, 50)),
-            )
+            ),
+            calm = true,
         ),
     )
 }
