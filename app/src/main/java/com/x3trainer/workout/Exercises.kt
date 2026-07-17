@@ -289,14 +289,14 @@ object Exercises {
             pose { legs(abd = 26f); spine(roll = 34f); armR(abd = 168f); armL(abd = 30f); head(-4f) },
             pose { legs(abd = 26f); spine(roll = 37f); armR(abd = 170f); armL(abd = 28f); head(-4f) }),
 
-        // The rig has no hip external rotation, so a literal foot-to-inner-thigh
-        // tree isn't reachable; this lifts the knee up and out into a clean,
-        // recognizable one-leg balance (the foot rides high, not on the floor).
+        // The lifted foot rests against the standing knee (contact-solved to
+        // ~0.05 m): hip flexed with slight adduction brings the sole in to the
+        // knee, knee bent and lifted. Sides switch at the mid-point of the hold.
         Exercise("tree", "TREE POSE", 16f, 0f, Db.NONE, t(0f, 0.42f, 0.5f, 0.92f),
-            pose { legR(hip = 46f, abd = 42f, knee = 130f, ankle = 20f); arms(abd = 150f, elbow = 24f); head(-4f) },
-            pose { legR(hip = 48f, abd = 44f, knee = 132f, ankle = 20f); arms(abd = 156f, elbow = 20f); head(-4f) },
-            pose { legL(hip = 46f, abd = 42f, knee = 130f, ankle = 20f); arms(abd = 150f, elbow = 24f); head(-4f) },
-            pose { legL(hip = 48f, abd = 44f, knee = 132f, ankle = 20f); arms(abd = 156f, elbow = 20f); head(-4f) }),
+            pose { legR(hip = 50f, abd = -20f, knee = 110f, ankle = 20f); arms(abd = 150f, elbow = 24f); head(-4f) },
+            pose { legR(hip = 52f, abd = -20f, knee = 112f, ankle = 20f); arms(abd = 156f, elbow = 20f); head(-4f) },
+            pose { legL(hip = 50f, abd = -20f, knee = 110f, ankle = 20f); arms(abd = 150f, elbow = 24f); head(-4f) },
+            pose { legL(hip = 52f, abd = -20f, knee = 112f, ankle = 20f); arms(abd = 156f, elbow = 20f); head(-4f) }),
 
         // ------------------------------------------------ general stretching
         Exercise("neck_rolls", "NECK ROLLS", 7f, 20f, Db.NONE, t(0f, 0.25f, 0.5f, 0.75f),

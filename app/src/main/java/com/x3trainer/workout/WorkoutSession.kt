@@ -42,6 +42,7 @@ class WorkoutSession(
     private var totalT = 0f
     private var totalReps = 0
     private var lastBeepSec = -1
+    private var getsetCueSaid = false   // first-move cue announced during the demo
 
     // Live vitals across the session (fed by the telemetry source).
     private var hr = 0
@@ -69,6 +70,7 @@ class WorkoutSession(
         level = lvl.coerceIn(0, 2)
         stepIdx = 0; reps = 0; totalReps = 0; totalT = 0f
         phase = GETSET; phaseT = 0f; u = 0f; paused = false; lastBeepSec = -1
+        getsetCueSaid = false
         hrSum = 0; hrN = 0; peakHr = 0; restVitalsToggle = false; doneLevelUp = false
         active = true
         host.say("wk_ready")
@@ -116,9 +118,17 @@ class WorkoutSession(
             GETSET -> {
                 u += dt * PREVIEW_TEMPO / Exercises.ALL[exId()].cycleSec
                 countdownBeeps(GETSET_SEC)
-                // Hold the demo until the intro line finishes so the first
-                // exercise cue isn't cut off by it (capped so it can't stall).
-                if (phaseT >= GETSET_SEC && (!host.voiceBusy() || phaseT > GETSET_SEC + 6f)) startWork()
+                // Announce the first move DURING the demo, but only once the
+                // intro line has finished — so the cue plays in a clean window
+                // with nothing before or after it to clip it. WORK then waits
+                // for the cue itself to finish (hard-capped so it can't stall).
+                if (!getsetCueSaid && !host.voiceBusy()) {
+                    getsetCueSaid = true
+                    host.say("cue_" + Exercises.ALL[exId()].key)
+                }
+                if ((phaseT >= GETSET_SEC && getsetCueSaid && !host.voiceBusy()) ||
+                    phaseT > GETSET_SEC + 10f
+                ) startWork(announce = false)
             }
             WORK -> {
                 val ex = Exercises.ALL[exId()]
@@ -160,10 +170,12 @@ class WorkoutSession(
         }
     }
 
-    private fun startWork() {
+    private fun startWork(announce: Boolean = true) {
         phase = WORK; phaseT = 0f; u = 0f; reps = 0; lastBeepSec = -1; saidHalf = false
         host.sound(Sfx.GO)
-        host.say("cue_" + Exercises.ALL[exId()].key)
+        // The first move is announced during the GET-READY demo; later moves
+        // are announced here (their rest preview is a clean window too).
+        if (announce) host.say("cue_" + Exercises.ALL[exId()].key)
     }
 
     private fun advance(fromSkip: Boolean = false) {
