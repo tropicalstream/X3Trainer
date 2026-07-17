@@ -142,7 +142,7 @@ class CoachRenderer(private val engine: Trainer) : GLSurfaceView.Renderer {
 
         val ex = Exercises.ALL[snap.exId]
         ex.poseAt(snap.u, chans)
-        rig.solve(chans, ex.viewYaw)
+        rig.solve(chans, ex.viewYaw, ex.plant)
 
         // Rep pulse: a ring that blooms out across the floor on each rep.
         if (repPulse > 0.01f) {

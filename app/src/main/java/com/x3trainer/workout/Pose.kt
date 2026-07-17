@@ -86,6 +86,9 @@ class Exercise(
     val times: FloatArray,
     vararg val keys: FloatArray,
 ) {
+    /** Standing exercise whose feet stay planted — anchor them (set in Exercises). */
+    var plant: Boolean = false
+
     /** Interpolate the loop at phase u (0..1) into out. Allocation-free. */
     fun poseAt(u: Float, out: FloatArray) {
         val uu = ((u % 1f) + 1f) % 1f

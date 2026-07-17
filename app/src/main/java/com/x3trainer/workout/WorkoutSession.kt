@@ -116,7 +116,9 @@ class WorkoutSession(
             GETSET -> {
                 u += dt * PREVIEW_TEMPO / Exercises.ALL[exId()].cycleSec
                 countdownBeeps(GETSET_SEC)
-                if (phaseT >= GETSET_SEC) startWork()
+                // Hold the demo until the intro line finishes so the first
+                // exercise cue isn't cut off by it (capped so it can't stall).
+                if (phaseT >= GETSET_SEC && (!host.voiceBusy() || phaseT > GETSET_SEC + 6f)) startWork()
             }
             WORK -> {
                 val ex = Exercises.ALL[exId()]
@@ -259,7 +261,7 @@ class WorkoutSession(
                 s.exId = exId()
                 s.curName = Exercises.ALL[exId()].name
                 when (phase) {
-                    GETSET -> s.countdown = (GETSET_SEC - phaseT).toInt() + 1
+                    GETSET -> s.countdown = ((GETSET_SEC - phaseT).toInt() + 1).coerceAtLeast(1)
                     REST -> s.restLeft = (program.restSec[level] - phaseT).toInt() + 1
                     WORK -> if (timed()) s.secsLeft = (secTarget() - phaseT).toInt() + 1
                 }

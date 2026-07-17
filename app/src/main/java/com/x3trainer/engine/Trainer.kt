@@ -18,6 +18,8 @@ interface TrainerHost {
     fun say(id: String, urgent: Boolean = false)
     /** Speak dynamic text (live vitals, stats) that can't be pre-generated. */
     fun sayLive(text: String)
+    /** True while the coach is talking (or has a line queued) — for pacing. */
+    fun voiceBusy(): Boolean
     /** (Re)build the telemetry source for the current settings choice. */
     fun rebindTelemetry()
     /** Show/hide the GL mat-coach surface (true while state == WORKOUT). */

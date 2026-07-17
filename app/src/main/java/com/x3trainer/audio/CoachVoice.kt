@@ -37,6 +37,9 @@ class CoachVoice(private val context: Context) {
     private val queue = ArrayDeque<String>()
     @Volatile private var speaking = false
 
+    /** True while a clip or TTS line is playing or queued — for phase gating. */
+    val isSpeaking: Boolean get() = speaking || queue.isNotEmpty()
+
     fun load() {
         runCatching {
             val txt = context.assets.open("phrases.json").bufferedReader().use { it.readText() }

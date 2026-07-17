@@ -134,6 +134,8 @@ class MainActivity : Activity(), TrainerHost {
 
     override fun sayLive(text: String) = voice.sayLive(text)
 
+    override fun voiceBusy(): Boolean = voice.isSpeaking
+
     override fun rebindTelemetry() {
         telemetry?.stop()
         telemetry = when (store.dataSource) {

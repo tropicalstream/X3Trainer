@@ -62,6 +62,18 @@ object Exercises {
 
     private fun t(vararg v: Float) = v
 
+    /**
+     * Standing exercises whose feet must stay planted while the legs bend or
+     * hinge — the rig anchors the planted foot so the body moves over stationary
+     * feet. Cardio (running-in-place) and floor/prone work are deliberately
+     * excluded: there the feet legitimately travel or aren't the ground support.
+     */
+    private val PLANTED = setOf(
+        "squat", "squat_jump", "goblet_squat", "chair", "lunge", "rdl", "row_bent",
+        "forward_fold", "warrior", "triangle", "tree", "quad_stretch",
+        "hip_flexor_lunge", "mountain_reach", "jumping_jacks",
+    )
+
     val ALL: Array<Exercise> = arrayOf(
 
         // ------------------------------------------------ rest / ceremony
@@ -277,11 +289,14 @@ object Exercises {
             pose { legs(abd = 26f); spine(roll = 34f); armR(abd = 168f); armL(abd = 30f); head(-4f) },
             pose { legs(abd = 26f); spine(roll = 37f); armR(abd = 170f); armL(abd = 28f); head(-4f) }),
 
+        // The rig has no hip external rotation, so a literal foot-to-inner-thigh
+        // tree isn't reachable; this lifts the knee up and out into a clean,
+        // recognizable one-leg balance (the foot rides high, not on the floor).
         Exercise("tree", "TREE POSE", 16f, 0f, Db.NONE, t(0f, 0.42f, 0.5f, 0.92f),
-            pose { legR(hip = 30f, abd = 42f, knee = 125f, ankle = 30f); arms(abd = 152f, elbow = 22f); head(-4f) },
-            pose { legR(hip = 30f, abd = 44f, knee = 127f, ankle = 30f); arms(abd = 156f, elbow = 20f); head(-4f) },
-            pose { legL(hip = 30f, abd = 42f, knee = 125f, ankle = 30f); arms(abd = 152f, elbow = 22f); head(-4f) },
-            pose { legL(hip = 30f, abd = 44f, knee = 127f, ankle = 30f); arms(abd = 156f, elbow = 20f); head(-4f) }),
+            pose { legR(hip = 46f, abd = 42f, knee = 130f, ankle = 20f); arms(abd = 150f, elbow = 24f); head(-4f) },
+            pose { legR(hip = 48f, abd = 44f, knee = 132f, ankle = 20f); arms(abd = 156f, elbow = 20f); head(-4f) },
+            pose { legL(hip = 46f, abd = 42f, knee = 130f, ankle = 20f); arms(abd = 150f, elbow = 24f); head(-4f) },
+            pose { legL(hip = 48f, abd = 44f, knee = 132f, ankle = 20f); arms(abd = 156f, elbow = 20f); head(-4f) }),
 
         // ------------------------------------------------ general stretching
         Exercise("neck_rolls", "NECK ROLLS", 7f, 20f, Db.NONE, t(0f, 0.25f, 0.5f, 0.75f),
@@ -328,5 +343,5 @@ object Exercises {
             pose { legL(hip = 74f, knee = 94f); legR(hip = -24f, knee = 88f, ankle = 50f); spine(pitch = -10f); arms(pitch = 148f, elbow = 5f); head(-11f) },
             pose { legR(hip = 72f, knee = 92f); legL(hip = -22f, knee = 88f, ankle = 50f); spine(pitch = -8f); arms(pitch = 145f, elbow = 6f); head(-10f) },
             pose { legR(hip = 74f, knee = 94f); legL(hip = -24f, knee = 88f, ankle = 50f); spine(pitch = -10f); arms(pitch = 148f, elbow = 5f); head(-11f) }),
-    )
+    ).also { arr -> for (e in arr) e.plant = e.key in PLANTED }
 }

@@ -61,7 +61,7 @@ class Rig {
         pos[j * 3] = v4b[0]; pos[j * 3 + 1] = v4b[1]; pos[j * 3 + 2] = v4b[2]
     }
 
-    fun solve(ch: FloatArray, extraYaw: Float) {
+    fun solve(ch: FloatArray, extraYaw: Float, plant: Boolean = false) {
         Matrix.setIdentityM(mRoot, 0)
         Matrix.rotateM(mRoot, 0, ch[Pose.BYAW] + extraYaw, 0f, 1f, 0f)
         Matrix.rotateM(mRoot, 0, ch[Pose.BPITCH], 1f, 0f, 0f)
@@ -97,6 +97,25 @@ class Rig {
         }
         val lift = -minY + ch[Pose.HOP]
         for (j in 0 until JOINTS) pos[j * 3 + 1] += lift
+
+        // Foot lock: for standing exercises, anchor the planted foot (or the
+        // midpoint of both, when both are down) at a fixed spot so the body
+        // sinks and hinges OVER stationary feet — instead of the feet sliding
+        // out from under a pelvis that's pinned to the origin. The anchor
+        // reference is the origin, which is exactly the neutral stance's foot
+        // centroid, so standing poses are unaffected.
+        if (plant) {
+            val yl = pos[ANKLE_L * 3 + 1]
+            val yr = pos[ANKLE_R * 3 + 1]
+            val lo = if (yl < yr) yl else yr
+            var ax = 0f; var az = 0f; var n = 0
+            if (yl <= lo + 0.06f) { ax += pos[ANKLE_L * 3]; az += pos[ANKLE_L * 3 + 2]; n++ }
+            if (yr <= lo + 0.06f) { ax += pos[ANKLE_R * 3]; az += pos[ANKLE_R * 3 + 2]; n++ }
+            if (n > 0) {
+                ax /= n; az /= n
+                for (j in 0 until JOINTS) { pos[j * 3] -= ax; pos[j * 3 + 2] -= az }
+            }
+        }
     }
 
     private fun leg(hipJoint: Int, side: Float, hip: Float, abd: Float, knee: Float, ankle: Float) {
