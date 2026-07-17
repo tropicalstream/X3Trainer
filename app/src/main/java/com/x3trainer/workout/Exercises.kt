@@ -249,10 +249,13 @@ object Exercises {
             pose { body(pitch = 90f); legs(hip = 90f, knee = 90f, ankle = 85f); arms(pitch = 64f, elbow = 42f); spine(pitch = -22f); head(-30f) },
             pose { body(pitch = 90f); legs(hip = 90f, knee = 90f, ankle = 85f); arms(pitch = 124f, elbow = 85f); spine(pitch = 24f); head(25f) }),
 
+        // Prone with hips and legs flat on the floor (feet plantar-flexed back),
+        // chest arched up on planted hands — contact-solved so the belly stays
+        // low (was propped up like an upward dog).
         Exercise("cobra", "COBRA STRETCH", 5f, 90f, Db.NONE, t(0f, 0.45f, 0.65f),
-            pose { body(pitch = 88f); spine(pitch = -5f); arms(pitch = 55f, elbow = 85f); head(-10f) },
-            pose { body(pitch = 88f); spine(pitch = -35f); arms(pitch = 55f, elbow = 15f); head(-24f) },
-            pose { body(pitch = 88f); spine(pitch = -35f); arms(pitch = 55f, elbow = 15f); head(-24f) }),
+            pose { body(pitch = 90f); legs(ankle = -62f); spine(pitch = -12f); arms(pitch = 90f, elbow = 78f); head(-12f) },
+            pose { body(pitch = 90f); legs(ankle = -68f); spine(pitch = -28f); arms(pitch = 80f, elbow = 60f); head(-24f) },
+            pose { body(pitch = 90f); legs(ankle = -68f); spine(pitch = -28f); arms(pitch = 80f, elbow = 60f); head(-24f) }),
 
         Exercise("downward_dog", "DOWNWARD DOG", 5f, 90f, Db.NONE, t(0f, 0.5f),
             pose { body(pitch = 118f); legs(hip = 55f, knee = 8f); arms(pitch = 168f, elbow = 5f); head(-20f) },
@@ -269,9 +272,11 @@ object Exercises {
             pose { arms(abd = 168f, elbow = 4f); spine(pitch = -6f); head(-10f) },
             pose { arms(abd = 172f, elbow = 2f); spine(pitch = -9f); head(-12f) }),
 
+        // Deep hinge (legs stay vertical via body-pitch/hip cancellation) with
+        // the arms hanging to the mat — hands reach the floor by the feet.
         Exercise("forward_fold", "FORWARD FOLD", 6f, 75f, Db.NONE, t(0f, 0.5f),
-            pose { body(pitch = 92f); legs(hip = 88f, knee = 12f); arms(pitch = 85f); head(-15f) },
-            pose { body(pitch = 96f); legs(hip = 92f, knee = 14f); arms(pitch = 88f); head(-15f) }),
+            pose { body(pitch = 118f); legs(hip = 114f, knee = 12f); arms(pitch = 103f); head(-15f) },
+            pose { body(pitch = 121f); legs(hip = 117f, knee = 12f); arms(pitch = 107f); head(-15f) }),
 
         Exercise("chair", "CHAIR POSE", 5f, 55f, Db.NONE, t(0f, 0.5f),
             pose { legs(hip = 70f, knee = 78f); spine(pitch = 12f); arms(pitch = 148f, elbow = 5f); head(-8f) },
@@ -305,11 +310,12 @@ object Exercises {
             pose { head(-26f); arms(abd = 5f) },
             pose { head(6f); spine(roll = -10f); arms(abd = 5f) }),
 
-        Exercise("shoulder_cross", "SHOULDER STRETCH", 14f, 10f, Db.NONE, t(0f, 0.42f, 0.5f, 0.92f),
-            pose { armL(pitch = 82f, abd = -28f); armR(pitch = 55f, elbow = 115f); head(3f) },
-            pose { armL(pitch = 84f, abd = -31f); armR(pitch = 57f, elbow = 117f); head(3f) },
-            pose { armR(pitch = 82f, abd = -28f); armL(pitch = 55f, elbow = 115f); head(3f) },
-            pose { armR(pitch = 84f, abd = -31f); armL(pitch = 57f, elbow = 117f); head(3f) }),
+        // Both arms reach behind the back (chest / shoulder opener) — hands
+        // clasp low behind the hips. A gentle bilateral hold, viewed 3/4 so the
+        // arms going back are visible.
+        Exercise("shoulder_cross", "SHOULDER STRETCH", 10f, 35f, Db.NONE, t(0f, 0.5f),
+            pose { arms(pitch = -38f, elbow = 16f); spine(pitch = 6f); head(4f) },
+            pose { arms(pitch = -45f, elbow = 12f); spine(pitch = 8f); head(5f) }),
 
         Exercise("tricep_overhead", "TRICEP STRETCH", 14f, 25f, Db.NONE, t(0f, 0.42f, 0.5f, 0.92f),
             pose { armL(abd = 168f, elbow = 148f); armR(abd = 120f, elbow = 95f); head(-6f) },
@@ -317,20 +323,26 @@ object Exercises {
             pose { armR(abd = 168f, elbow = 148f); armL(abd = 120f, elbow = 95f); head(-6f) },
             pose { armR(abd = 170f, elbow = 152f); armL(abd = 122f, elbow = 97f); head(-6f) }),
 
+        // Standing quad stretch: knee bent back, the same-side hand reaches back
+        // and holds the ankle (contact-solved, hand-to-ankle ~0.14 m).
         Exercise("quad_stretch", "QUAD STRETCH", 16f, 78f, Db.NONE, t(0f, 0.42f, 0.5f, 0.92f),
-            pose { legR(hip = -12f, knee = 138f); armR(pitch = -42f, elbow = 58f); armL(pitch = 25f, abd = 40f); spine(pitch = -4f) },
-            pose { legR(hip = -13f, knee = 141f); armR(pitch = -44f, elbow = 60f); armL(pitch = 27f, abd = 42f); spine(pitch = -4f) },
-            pose { legL(hip = -12f, knee = 138f); armL(pitch = -42f, elbow = 58f); armR(pitch = 25f, abd = 40f); spine(pitch = -4f) },
-            pose { legL(hip = -13f, knee = 141f); armL(pitch = -44f, elbow = 60f); armR(pitch = 27f, abd = 42f); spine(pitch = -4f) }),
+            pose { legR(hip = -14f, knee = 140f); armR(pitch = -70f, elbow = 80f); armL(pitch = 25f, abd = 40f); spine(pitch = -4f) },
+            pose { legR(hip = -15f, knee = 142f); armR(pitch = -72f, elbow = 82f); armL(pitch = 27f, abd = 42f); spine(pitch = -4f) },
+            pose { legL(hip = -14f, knee = 140f); armL(pitch = -70f, elbow = 80f); armR(pitch = 25f, abd = 40f); spine(pitch = -4f) },
+            pose { legL(hip = -15f, knee = 142f); armL(pitch = -72f, elbow = 82f); armR(pitch = 27f, abd = 42f); spine(pitch = -4f) }),
 
+        // Sit on the mat (butt grounded), legs extended forward and feet flexed,
+        // then fold the torso over the legs reaching for the feet.
         Exercise("seated_fold", "SEATED FOLD", 8f, 90f, Db.NONE, t(0f, 0.45f, 0.65f),
-            pose { body(pitch = 8f); legs(hip = 86f, knee = 4f, ankle = 30f); spine(pitch = 15f); arms(pitch = 45f, elbow = 15f); head(8f) },
-            pose { body(pitch = 18f); legs(hip = 86f, knee = 4f, ankle = 30f); spine(pitch = 42f); arms(pitch = 95f, elbow = 8f); head(14f) },
-            pose { body(pitch = 18f); legs(hip = 86f, knee = 4f, ankle = 30f); spine(pitch = 42f); arms(pitch = 95f, elbow = 8f); head(14f) }),
+            pose { body(pitch = 0f); legs(hip = 90f, knee = 5f, ankle = -15f); spine(pitch = 12f); arms(pitch = 70f, elbow = 20f); head(8f) },
+            pose { body(pitch = 0f); legs(hip = 90f, knee = 5f, ankle = -15f); spine(pitch = 48f); arms(pitch = 92f, elbow = 6f); head(14f) },
+            pose { body(pitch = 0f); legs(hip = 90f, knee = 5f, ankle = -15f); spine(pitch = 48f); arms(pitch = 92f, elbow = 6f); head(14f) }),
 
+        // Sit on the mat, soles of the feet drawn together at the midline with
+        // knees dropped out to the sides; hands cradle the feet.
         Exercise("butterfly", "BUTTERFLY", 7f, 20f, Db.NONE, t(0f, 0.5f),
-            pose { legs(hip = 62f, abd = 42f, knee = 118f, ankle = 25f); spine(pitch = 14f); arms(pitch = 48f, elbow = 68f); head(6f) },
-            pose { legs(hip = 62f, abd = 45f, knee = 120f, ankle = 25f); spine(pitch = 20f); arms(pitch = 52f, elbow = 70f); head(8f) }),
+            pose { legs(hip = 40f, abd = 80f, knee = 165f, ankle = 15f); spine(pitch = 12f); arms(pitch = 55f, elbow = 70f); head(6f) },
+            pose { legs(hip = 42f, abd = 80f, knee = 166f, ankle = 15f); spine(pitch = 16f); arms(pitch = 57f, elbow = 72f); head(8f) }),
 
         Exercise("figure_four", "FIGURE FOUR", 16f, 90f, Db.NONE, t(0f, 0.42f, 0.5f, 0.92f),
             pose { body(pitch = -88f); legL(hip = 72f, knee = 88f); legR(hip = 55f, abd = 48f, knee = 115f); arms(pitch = 62f, elbow = 42f); head(10f) },

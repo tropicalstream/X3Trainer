@@ -3,8 +3,10 @@
 Pre-generate X3Trainer's coaching voice clips with fish.audio S2.1 Pro
 (free developer tier: https://fish.audio/blog/s2-1-pro-free-api/).
 
-The enthusiastic coach voice model:
-  https://fish.audio/app/m/b32a85fcc90249b99cb555c0c3e50675/
+Two voices: the enthusiastic coach for timer/strength/HIIT, and a soothing
+voice for the yoga & general-stretching cues (see SOOTHING_IDS below).
+  enthusiastic: https://fish.audio/app/m/b32a85fcc90249b99cb555c0c3e50675/
+  soothing:     https://fish.audio/app/m/8d797adca9af48ca9e8a1c7284db1d6c/
 
 Usage:
   export FISH_API_KEY=...          # from https://fish.audio developer console
@@ -31,8 +33,24 @@ except ImportError:
 ROOT = Path(__file__).resolve().parent.parent
 PHRASES = ROOT / "app/src/main/assets/phrases.json"
 OUT_DIR = ROOT / "app/src/main/assets/tts"
-VOICE_MODEL_ID = "b32a85fcc90249b99cb555c0c3e50675"  # enthusiastic coach
+VOICE_MODEL_ID = "b32a85fcc90249b99cb555c0c3e50675"  # enthusiastic coach (default)
+SOOTHING_MODEL_ID = "8d797adca9af48ca9e8a1c7284db1d6c"  # calm voice for yoga/stretch
 API_URL = "https://api.fish.audio/v1/tts"
+
+# The yoga and general-stretching cues get the soothing voice; everything else
+# (timer, coaching, HIIT/strength cues) keeps the enthusiastic coach. Delete a
+# clip and re-run to regenerate it with whatever model maps here now.
+SOOTHING_IDS = {
+    "cue_mountain_reach", "cue_forward_fold", "cue_chair", "cue_warrior",
+    "cue_triangle", "cue_tree", "cue_neck_rolls", "cue_shoulder_cross",
+    "cue_tricep_overhead", "cue_quad_stretch", "cue_seated_fold", "cue_butterfly",
+    "cue_figure_four", "cue_hip_flexor_lunge", "cue_cat_cow", "cue_cobra",
+    "cue_downward_dog", "cue_childs_pose",
+}
+
+
+def model_for(pid: str) -> str:
+    return SOOTHING_MODEL_ID if pid in SOOTHING_IDS else VOICE_MODEL_ID
 
 
 def main() -> None:
@@ -58,7 +76,7 @@ def main() -> None:
             },
             json={
                 "text": text,
-                "reference_id": VOICE_MODEL_ID,
+                "reference_id": model_for(pid),
                 "format": "mp3",
                 "mp3_bitrate": 64,
                 "normalize": True,
