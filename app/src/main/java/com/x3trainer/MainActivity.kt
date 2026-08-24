@@ -22,8 +22,8 @@ import com.x3trainer.audio.Sfx
 import com.x3trainer.engine.Trainer
 import com.x3trainer.engine.TrainerHost
 import com.x3trainer.gl.CoachRenderer
-import com.x3trainer.telemetry.BleSource
 import com.x3trainer.telemetry.DemoSource
+import com.x3trainer.telemetry.PhoneRelaySource
 import com.x3trainer.telemetry.StatusSource
 import com.x3trainer.telemetry.TelemetrySource
 import com.x3trainer.workout.WorkoutLog
@@ -141,7 +141,7 @@ class MainActivity : Activity(), TrainerHost {
         telemetry?.stop()
         telemetry = when (store.dataSource) {
             1 -> {
-                if (ensureBlePermissions()) BleSource(this)
+                if (ensurePhoneLinkPermission()) PhoneRelaySource(this)
                 else StatusSource("ALLOW BLUETOOTH", "BLUETOOTH PERMISSION REQUIRED")
             }
             else -> DemoSource()
@@ -149,9 +149,9 @@ class MainActivity : Activity(), TrainerHost {
         telemetry?.start(engine)
     }
 
-    private fun ensureBlePermissions(): Boolean {
+    private fun ensurePhoneLinkPermission(): Boolean {
         if (Build.VERSION.SDK_INT < 31) return true
-        val needed = arrayOf(Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT)
+        val needed = arrayOf(Manifest.permission.BLUETOOTH_CONNECT)
             .filter { checkSelfPermission(it) != PackageManager.PERMISSION_GRANTED }
         if (needed.isEmpty()) return true
         requestPermissions(needed.toTypedArray(), 71)

@@ -14,3 +14,5 @@ dependencyResolutionManagement {
 }
 rootProject.name = "X3Trainer"
 include(":app")
+include(":companion")
+include(":wear")
