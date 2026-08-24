@@ -22,6 +22,7 @@ typedef struct appdata {
 	bool hr_subscribed;
 	bool rsc_subscribed;
 	bt_advertiser_h advertiser;
+	Ecore_Timer *advertising_restart_timer;
 	bt_gatt_server_h server;
 	bt_gatt_h hr_service;
 	bt_gatt_h hr_measurement;
@@ -40,6 +41,8 @@ typedef struct appdata {
 static void render(appdata_s *ad);
 static void begin_direct_broadcast(appdata_s *ad);
 static void stop_bluetooth(appdata_s *ad);
+static bool start_advertising(appdata_s *ad);
+static void schedule_advertising_restart(appdata_s *ad);
 
 static void set_status(appdata_s *ad, const char *status)
 {
@@ -75,8 +78,8 @@ static void render(appdata_s *ad)
 
 	snprintf(markup, sizeof(markup),
 		"<align=center>"
-		"<font_size=24><color=#5EDBFF><b>X3 DIRECT</b></color></font_size><br/>"
-		"<font_size=15><color=#8192A8>ACTIVE2 SENSOR BROADCAST</color></font_size><br/><br/>"
+		"<font_size=24><color=#5EDBFF><b>X3TRAINER LINK</b></color></font_size><br/>"
+		"<font_size=15><color=#8192A8>ACTIVE2  &gt;  PHONE  &gt;  X3</color></font_size><br/><br/>"
 		"<font_size=48><color=#FF5D7D><b>%s</b></color></font_size>"
 		"<font_size=18><color=#B8C6D9> bpm</color></font_size><br/>"
 		"<font_size=13><color=#8192A8>HEART RATE</color></font_size><br/><br/>"
@@ -334,11 +337,11 @@ static void subscription_changed_cb(bool notify, bt_gatt_server_h server,
 		ad->rsc_subscribed = notify;
 
 	if (ad->gatt_connected && ad->hr_subscribed)
-		set_status(ad, "LIVE TO X3 PRO");
+		set_status(ad, "LIVE TO PHONE");
 	else if (ad->gatt_connected)
-		set_status(ad, "X3 CONNECTED - SUBSCRIBING");
+		set_status(ad, "PHONE CONNECTED - SUBSCRIBING");
 	else
-		set_status(ad, "WAITING FOR X3TRAINER");
+		set_status(ad, "WAITING FOR PHONE BRIDGE");
 
 	if (notify) {
 		publish_heart_rate(ad);
@@ -350,18 +353,21 @@ static void connection_changed_cb(int result, bool connected,
 		const char *remote_address, void *user_data)
 {
 	appdata_s *ad = user_data;
-	(void)remote_address;
 
 	if (!ad)
 		return;
 
+	dlog_print(DLOG_INFO, LOG_TAG, "GATT connection result=%d connected=%d remote=%s",
+		result, connected, remote_address ? remote_address : "unknown");
+
 	ad->gatt_connected = connected && result == BT_ERROR_NONE;
 	if (ad->gatt_connected)
-		set_status(ad, "X3 CONNECTED - SUBSCRIBING");
+		set_status(ad, "PHONE CONNECTED - SUBSCRIBING");
 	else {
 		ad->hr_subscribed = false;
 		ad->rsc_subscribed = false;
-		set_status(ad, ad->advertising ? "WAITING FOR X3TRAINER" : "BLE RESTART NEEDED");
+		set_status(ad, "WAITING FOR PHONE BRIDGE");
+		schedule_advertising_restart(ad);
 	}
 }
 
@@ -374,14 +380,65 @@ static void advertising_state_cb(int result, bt_advertiser_h advertiser,
 	if (!ad)
 		return;
 
+	dlog_print(DLOG_INFO, LOG_TAG, "Advertising state result=%d state=%d",
+		result, state);
+
 	ad->advertising = (result == BT_ERROR_NONE &&
 		state == BT_ADAPTER_LE_ADVERTISING_STARTED);
 	if (result != BT_ERROR_NONE)
 		set_status(ad, "BLE ADVERTISING FAILED");
 	else if (ad->gatt_connected)
-		set_status(ad, ad->hr_subscribed ? "LIVE TO X3 PRO" : "X3 CONNECTED - SUBSCRIBING");
+		set_status(ad, ad->hr_subscribed ? "LIVE TO PHONE" : "PHONE CONNECTED - SUBSCRIBING");
 	else if (ad->advertising)
-		set_status(ad, "WAITING FOR X3TRAINER");
+		set_status(ad, "WAITING FOR PHONE BRIDGE");
+	else if (ad->server_started && !ad->gatt_connected)
+		schedule_advertising_restart(ad);
+}
+
+static Eina_Bool advertising_restart_timer_cb(void *data)
+{
+	appdata_s *ad = data;
+
+	if (!ad)
+		return ECORE_CALLBACK_CANCEL;
+
+	ad->advertising_restart_timer = NULL;
+	if (ad->server_started && ad->advertiser && !ad->advertising &&
+			!ad->gatt_connected)
+		start_advertising(ad);
+
+	return ECORE_CALLBACK_CANCEL;
+}
+
+static void schedule_advertising_restart(appdata_s *ad)
+{
+	if (!ad || !ad->server_started || !ad->advertiser || ad->advertising ||
+			ad->gatt_connected || ad->advertising_restart_timer)
+		return;
+
+	ad->advertising_restart_timer = ecore_timer_add(0.75,
+		advertising_restart_timer_cb, ad);
+}
+
+static bool start_advertising(appdata_s *ad)
+{
+	int ret;
+
+	if (!ad || !ad->server_started || !ad->advertiser)
+		return false;
+	if (ad->advertising || ad->gatt_connected)
+		return true;
+
+	ret = bt_adapter_le_start_advertising_new(ad->advertiser,
+		advertising_state_cb, ad);
+	if (ret != BT_ERROR_NONE && ret != BT_ERROR_ALREADY_DONE) {
+		dlog_print(DLOG_ERROR, LOG_TAG, "Advertising start failed: %d", ret);
+		set_status(ad, "BLE ADVERTISING FAILED");
+		return false;
+	}
+
+	set_status(ad, "STARTING BLE TO PHONE");
+	return true;
 }
 
 static int add_measurement_service(appdata_s *ad, const char *service_uuid,
@@ -498,24 +555,34 @@ static bool start_bluetooth(appdata_s *ad)
 	ret = bt_adapter_le_create_advertiser(&ad->advertiser);
 	if (ret != BT_ERROR_NONE)
 		goto fail;
-	bt_adapter_le_set_advertising_mode(ad->advertiser,
+	ret = bt_adapter_le_set_advertising_mode(ad->advertiser,
 		BT_ADAPTER_LE_ADVERTISING_MODE_LOW_LATENCY);
-	bt_adapter_le_set_advertising_connectable(ad->advertiser, true);
-	bt_adapter_le_add_advertising_service_uuid(ad->advertiser,
-		BT_ADAPTER_LE_PACKET_ADVERTISING, UUID_HEART_RATE_SERVICE);
-	bt_adapter_le_add_advertising_service_uuid(ad->advertiser,
-		BT_ADAPTER_LE_PACKET_ADVERTISING, UUID_RUNNING_SPEED_CADENCE_SERVICE);
-	bt_adapter_le_set_advertising_appearance(ad->advertiser,
-		BT_ADAPTER_LE_PACKET_ADVERTISING, 0x0340);
-	bt_adapter_le_set_advertising_device_name(ad->advertiser,
-		BT_ADAPTER_LE_PACKET_SCAN_RESPONSE, true);
-
-	ret = bt_adapter_le_start_advertising_new(ad->advertiser,
-		advertising_state_cb, ad);
 	if (ret != BT_ERROR_NONE)
 		goto fail;
+	ret = bt_adapter_le_set_advertising_connectable(ad->advertiser, true);
+	if (ret != BT_ERROR_NONE)
+		goto fail;
+	ret = bt_adapter_le_add_advertising_service_uuid(ad->advertiser,
+		BT_ADAPTER_LE_PACKET_ADVERTISING, UUID_HEART_RATE_SERVICE);
+	if (ret != BT_ERROR_NONE)
+		goto fail;
+	ret = bt_adapter_le_add_advertising_service_uuid(ad->advertiser,
+		BT_ADAPTER_LE_PACKET_ADVERTISING, UUID_RUNNING_SPEED_CADENCE_SERVICE);
+	if (ret != BT_ERROR_NONE)
+		goto fail;
+	ret = bt_adapter_le_set_advertising_appearance(ad->advertiser,
+		BT_ADAPTER_LE_PACKET_ADVERTISING, 0x0340);
+	if (ret != BT_ERROR_NONE)
+		dlog_print(DLOG_WARN, LOG_TAG, "Advertising appearance unavailable: %d", ret);
+	ret = bt_adapter_le_set_advertising_device_name(ad->advertiser,
+		BT_ADAPTER_LE_PACKET_SCAN_RESPONSE, true);
+	if (ret != BT_ERROR_NONE)
+		dlog_print(DLOG_WARN, LOG_TAG, "Advertising device name unavailable: %d", ret);
 
-	set_status(ad, "STARTING BLE BROADCAST");
+	if (!start_advertising(ad)) {
+		ret = BT_ERROR_OPERATION_FAILED;
+		goto fail;
+	}
 	return true;
 
 fail:
@@ -529,6 +596,13 @@ static void stop_bluetooth(appdata_s *ad)
 {
 	if (!ad)
 		return;
+
+	/* Prevent asynchronous STOPPED callbacks from restarting a torn-down advertiser. */
+	ad->server_started = false;
+	if (ad->advertising_restart_timer) {
+		ecore_timer_del(ad->advertising_restart_timer);
+		ad->advertising_restart_timer = NULL;
+	}
 
 	if (ad->advertiser) {
 		bt_adapter_le_stop_advertising(ad->advertiser);
@@ -566,7 +640,6 @@ static void stop_bluetooth(appdata_s *ad)
 		bt_deinitialize();
 		ad->bt_initialized = false;
 	}
-	ad->server_started = false;
 }
 
 static void begin_direct_broadcast(appdata_s *ad)
@@ -672,7 +745,7 @@ static void create_base_gui(appdata_s *ad)
 {
 	Evas_Object *background;
 
-	ad->win = elm_win_util_standard_add(PACKAGE, "X3Trainer Direct");
+	ad->win = elm_win_util_standard_add(PACKAGE, "X3Trainer Link");
 	elm_win_autodel_set(ad->win, EINA_TRUE);
 	evas_object_smart_callback_add(ad->win, "delete,request", win_delete_request_cb, ad);
 	eext_object_event_callback_add(ad->win, EEXT_CALLBACK_BACK, win_back_cb, ad);

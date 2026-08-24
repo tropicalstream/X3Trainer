@@ -26,13 +26,13 @@ class SettingsStore(context: Context) {
         get() = p.getBoolean("disclaimerOk", false)
         set(v) { p.edit().putBoolean("disclaimerOk", v).apply() }
 
-    /** 0 Demo, 1 live BLE sensor / X3Trainer Active2 broadcaster. Live is the default. */
+    /** 0 Demo, 1 live watch sensor through the paired Galaxy phone. Live is the default. */
     var dataSource: Int
         get() = p.getInt("dataSource", 1)
         set(v) { p.edit().putInt("dataSource", ((v % 2) + 2) % 2).apply() }
 
     val dataSourceLabel: String
-        get() = if (dataSource == 1) "Active2 Direct" else "Demo (simulated)"
+        get() = if (dataSource == 1) "Watch via phone" else "Demo (simulated)"
 
     /** Max heart rate used for zone math. */
     var maxHr: Int

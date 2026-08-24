@@ -3,7 +3,7 @@
 	<profile name="wearable" />
 	<ui-application appid="org.example.x3trainerbroadcaster" exec="x3trainerbroadcaster" type="capp" multiple="false" taskmanage="true" nodisplay="false">
 		<icon>x3trainerbroadcaster.png</icon>
-		<label>X3Trainer Direct</label>
+		<label>X3Trainer Link</label>
 		<background-category value="sensor" />
 	</ui-application>
 	<features>
