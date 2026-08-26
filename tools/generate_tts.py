@@ -6,7 +6,7 @@ Pre-generate X3Trainer's coaching voice clips with fish.audio S2.1 Pro
 Two voices: the enthusiastic coach for timer/strength/HIIT, and a soothing
 voice for the yoga & general-stretching cues (see SOOTHING_IDS below).
   enthusiastic: https://fish.audio/app/m/b32a85fcc90249b99cb555c0c3e50675/
-  soothing:     https://fish.audio/app/m/8d797adca9af48ca9e8a1c7284db1d6c/
+  soothing:     https://fish.audio/app/m/b35b628d1b1146529f36f44bc11d7f09/
 
 Usage:
   export FISH_API_KEY=...          # from https://fish.audio developer console
@@ -34,8 +34,10 @@ ROOT = Path(__file__).resolve().parent.parent
 PHRASES = ROOT / "app/src/main/assets/phrases.json"
 OUT_DIR = ROOT / "app/src/main/assets/tts"
 VOICE_MODEL_ID = "b32a85fcc90249b99cb555c0c3e50675"  # enthusiastic coach (default)
-SOOTHING_MODEL_ID = "8d797adca9af48ca9e8a1c7284db1d6c"  # calm voice for yoga/stretch
+SOOTHING_MODEL_ID = "b35b628d1b1146529f36f44bc11d7f09"  # calm voice for yoga/stretch
 API_URL = "https://api.fish.audio/v1/tts"
+# Override with FISH_MODEL=s2.1-pro-free on a key without credit.
+TTS_ENGINE = os.environ.get("FISH_MODEL", "s2.1-pro")
 
 # The yoga and general-stretching cues get the soothing voice; everything else
 # (timer, coaching, HIIT/strength cues) keeps the enthusiastic coach. Delete a
@@ -77,7 +79,14 @@ def main() -> None:
             headers={
                 "Authorization": f"Bearer {api_key}",
                 "Content-Type": "application/json",
-                "Model": "s1",  # server maps to the current S2.1 Pro engine
+                # The ENGINE, as distinct from the voice above. s2.1-pro is
+                # fish.audio's current production model; s1 is the legacy one,
+                # and the comment that used to sit here claiming the server
+                # silently upgraded s1 to S2.1 Pro was wrong — every clip in
+                # the repo before this change was generated on the old engine.
+                # s2.1-pro-free is the same model under free-tier fair use, so
+                # a key without credit only needs the environment variable.
+                "model": TTS_ENGINE,
             },
             json={
                 "text": text,

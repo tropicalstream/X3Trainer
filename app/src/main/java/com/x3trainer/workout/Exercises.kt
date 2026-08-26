@@ -10,6 +10,43 @@ package com.x3trainer.workout
  */
 object Exercises {
 
+    /**
+     * A small, explicit visual relationship for holds that a stick figure
+     * cannot communicate reliably on its own.  The renderer draws these in
+     * amber, which makes the "hand to elbow/ankle" or "foot to knee" target
+     * unambiguous without turning the coach into a labelled diagram.
+     */
+    data class VisualCue(val from: Int, val to: Int, val start: Float = 0f, val end: Float = 1f)
+
+    private val NO_VISUAL_CUES = emptyArray<VisualCue>()
+    private val VISUAL_CUES: Map<String, Array<VisualCue>> = mapOf(
+        "shoulder_cross" to arrayOf(
+            VisualCue(Rig.HAND_R, Rig.ELB_L, 0f, 0.5f),
+            VisualCue(Rig.HAND_L, Rig.ELB_R, 0.5f, 1f),
+        ),
+        "tricep_overhead" to arrayOf(
+            VisualCue(Rig.HAND_R, Rig.ELB_L, 0f, 0.5f),
+            VisualCue(Rig.HAND_L, Rig.ELB_R, 0.5f, 1f),
+        ),
+        "quad_stretch" to arrayOf(
+            VisualCue(Rig.HAND_R, Rig.ANKLE_R, 0f, 0.5f),
+            VisualCue(Rig.HAND_L, Rig.ANKLE_L, 0.5f, 1f),
+        ),
+        "tree" to arrayOf(
+            VisualCue(Rig.TOE_R, Rig.KNEE_L, 0f, 0.5f),
+            VisualCue(Rig.TOE_L, Rig.KNEE_R, 0.5f, 1f),
+        ),
+        "butterfly" to arrayOf(
+            VisualCue(Rig.HAND_L, Rig.TOE_L), VisualCue(Rig.HAND_R, Rig.TOE_R),
+        ),
+        "figure_four" to arrayOf(
+            VisualCue(Rig.ANKLE_R, Rig.KNEE_L, 0f, 0.5f),
+            VisualCue(Rig.ANKLE_L, Rig.KNEE_R, 0.5f, 1f),
+        ),
+    )
+
+    fun visualCues(key: String): Array<VisualCue> = VISUAL_CUES[key] ?: NO_VISUAL_CUES
+
     // Indices into ALL — programs reference these.
     const val IDLE = 0
     const val VICTORY = 1
@@ -123,12 +160,14 @@ object Exercises {
             pose { body(pitch = 74f); legs(hip = 16f, knee = 40f, ankle = 85f); arms(pitch = 58f, elbow = 95f); head(-14f) }),
 
         Exercise("plank", "PLANK", 4f, 90f, Db.NONE, t(0f, 0.5f),
-            pose { body(pitch = 87f); arms(pitch = 92f, elbow = 90f); head(-16f) },
-            pose { body(pitch = 87f); spine(pitch = 3f); arms(pitch = 92f, elbow = 90f); head(-13f) }),
+            pose { body(pitch = 85f); arms(pitch = 92f, elbow = 90f); head(-16f) },
+            pose { body(pitch = 84f); spine(pitch = 3f); arms(pitch = 92f, elbow = 90f); head(-13f) }),
 
         Exercise("side_plank", "SIDE PLANK", 4f, 0f, Db.NONE, t(0f, 0.5f),
-            pose { body(roll = -75f); armL(abd = 80f, elbow = 88f); armR(abd = 88f); head(4f) },
-            pose { body(roll = -79f); armL(abd = 84f, elbow = 88f); armR(abd = 92f); head(4f) }),
+            // At -75° the support-side foot hovered above the mat.  This
+            // angle keeps the forearm and lower foot visibly grounded.
+            pose { body(roll = -72f); armL(abd = 80f, elbow = 88f); armR(abd = 88f); head(4f) },
+            pose { body(roll = -73f); armL(abd = 84f, elbow = 88f); armR(abd = 92f); head(4f) }),
 
         Exercise("plank_jack", "PLANK JACKS", 0.9f, 90f, Db.NONE, t(0f, 0.25f, 0.5f, 0.75f),
             pose { body(pitch = 72f); arms(pitch = 90f, elbow = 3f); head(-14f) },
@@ -137,10 +176,10 @@ object Exercises {
             pose { body(pitch = 72f); hop(0.05f); legs(abd = 12f); arms(pitch = 90f, elbow = 3f); head(-14f) }),
 
         Exercise("mountain_climber", "MOUNTAIN CLIMBERS", 0.8f, 90f, Db.NONE, t(0f, 0.25f, 0.5f, 0.75f),
-            pose { body(pitch = 82f); legL(hip = 95f, knee = 100f); legR(hip = 5f); arms(pitch = 90f, elbow = 3f); head(-12f) },
-            pose { body(pitch = 82f); legs(hip = 45f, knee = 50f); arms(pitch = 90f, elbow = 3f); head(-12f) },
-            pose { body(pitch = 82f); legR(hip = 95f, knee = 100f); legL(hip = 5f); arms(pitch = 90f, elbow = 3f); head(-12f) },
-            pose { body(pitch = 82f); legs(hip = 45f, knee = 50f); arms(pitch = 90f, elbow = 3f); head(-12f) }),
+            pose { body(pitch = 85f); legL(hip = 95f, knee = 100f); legR(hip = 5f); arms(pitch = 90f, elbow = 3f); head(-12f) },
+            pose { body(pitch = 85f); legs(hip = 45f, knee = 50f); arms(pitch = 90f, elbow = 3f); head(-12f) },
+            pose { body(pitch = 85f); legR(hip = 95f, knee = 100f); legL(hip = 5f); arms(pitch = 90f, elbow = 3f); head(-12f) },
+            pose { body(pitch = 85f); legs(hip = 45f, knee = 50f); arms(pitch = 90f, elbow = 3f); head(-12f) }),
 
         Exercise("burpee", "BURPEES", 3.6f, 30f, Db.NONE, t(0f, 0.18f, 0.36f, 0.55f, 0.72f, 0.85f),
             pose { arms(abd = 12f) },
@@ -258,8 +297,10 @@ object Exercises {
             pose { body(pitch = 90f); legs(ankle = -68f); spine(pitch = -28f); arms(pitch = 80f, elbow = 60f); head(-24f) }),
 
         Exercise("downward_dog", "DOWNWARD DOG", 5f, 90f, Db.NONE, t(0f, 0.5f),
-            pose { body(pitch = 118f); legs(hip = 55f, knee = 8f); arms(pitch = 168f, elbow = 5f); head(-20f) },
-            pose { body(pitch = 116f); legs(hip = 53f, knee = 12f); arms(pitch = 168f, elbow = 5f); head(-20f) }),
+            // Hips are set so hands *and* toes meet the mat.  The previous
+            // version grounded the hands but left both feet visibly floating.
+            pose { body(pitch = 118f); legs(hip = 63f, knee = 8f); arms(pitch = 168f, elbow = 5f); head(-20f) },
+            pose { body(pitch = 116f); legs(hip = 60f, knee = 12f); arms(pitch = 168f, elbow = 5f); head(-20f) }),
 
         Exercise("childs_pose", "CHILDS POSE", 5f, 90f, Db.NONE, t(0f, 0.5f),
             pose { body(pitch = 72f); legs(hip = 132f, knee = 150f, ankle = 55f); spine(pitch = 18f); arms(pitch = 155f); head(18f) },
@@ -310,12 +351,13 @@ object Exercises {
             pose { head(-26f); arms(abd = 5f) },
             pose { head(6f); spine(roll = -10f); arms(abd = 5f) }),
 
-        // Both arms reach behind the back (chest / shoulder opener) — hands
-        // clasp low behind the hips. A gentle bilateral hold, viewed 3/4 so the
-        // arms going back are visible.
-        Exercise("shoulder_cross", "SHOULDER STRETCH", 10f, 35f, Db.NONE, t(0f, 0.5f),
-            pose { arms(pitch = -38f, elbow = 16f); spine(pitch = 6f); head(4f) },
-            pose { arms(pitch = -45f, elbow = 12f); spine(pitch = 8f); head(5f) }),
+        // Cross-body shoulder stretch.  The supporting hand-to-elbow cue
+        // makes the hold legible at glasses scale; sides switch halfway.
+        Exercise("shoulder_cross", "SHOULDER STRETCH", 16f, 8f, Db.NONE, t(0f, 0.42f, 0.5f, 0.92f),
+            pose { armL(abd = -82f); armR(abd = 52f, pitch = 26f, elbow = 95f); spine(pitch = 3f); head(3f) },
+            pose { armL(abd = -86f); armR(abd = 55f, pitch = 28f, elbow = 98f); spine(pitch = 4f); head(3f) },
+            pose { armR(abd = -82f); armL(abd = 52f, pitch = 26f, elbow = 95f); spine(pitch = 3f); head(3f) },
+            pose { armR(abd = -86f); armL(abd = 55f, pitch = 28f, elbow = 98f); spine(pitch = 4f); head(3f) }),
 
         Exercise("tricep_overhead", "TRICEP STRETCH", 14f, 25f, Db.NONE, t(0f, 0.42f, 0.5f, 0.92f),
             pose { armL(abd = 168f, elbow = 148f); armR(abd = 120f, elbow = 95f); head(-6f) },

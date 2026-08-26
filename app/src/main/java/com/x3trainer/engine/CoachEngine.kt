@@ -111,7 +111,10 @@ class CoachEngine(private val store: SettingsStore, private val speak: (id: Stri
         }
 
         // --- cadence nudges when 10+ spm off target ---
-        if (cadence > 0 && can("cadence", 55f)) {
+        // Only where steps describe the activity. On a bike this number comes
+        // from a pedometer that has nothing to count, so any value it produces
+        // is road vibration and coaching toward it would be inventing advice.
+        if (store.exerciseMode.stepCadence && cadence > 0 && can("cadence", 55f)) {
             val diff = cadence - store.targetCadence
             if (diff <= -10) { fire("cadence", "cadence_up"); return }
             if (diff >= 12) { fire("cadence", "cadence_down"); return }

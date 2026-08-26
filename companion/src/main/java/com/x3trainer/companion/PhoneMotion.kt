@@ -43,6 +43,10 @@ class PhoneMotion(private val context: Context) : SensorEventListener, LocationL
         private const val TAG = "X3TrainerMotion"
         /** Steps are counted over this window; shorter reads as noise. */
         private const val CADENCE_WINDOW_MS = 10_000L
+        /** Steps remembered for the detector-based rate. */
+        private const val STEP_MEMORY = 8
+        /** ...and how far back they may be before they stop counting. */
+        private const val STEP_WINDOW_MS = 6_000L
         /** No step in this long means standing still, not "same cadence". */
         private const val CADENCE_IDLE_MS = 6_000L
         /** A fix older than this is history, not a speed. */
@@ -87,6 +91,7 @@ class PhoneMotion(private val context: Context) : SensorEventListener, LocationL
         context.checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED
 
     private fun startSteps() {
+        startDetector()
         // ACTIVITY_RECOGNITION guards the step counter from API 29. Without it
         // registerListener quietly succeeds and never delivers, which is
         // indistinguishable from a wearer who is not moving.
@@ -126,12 +131,20 @@ class PhoneMotion(private val context: Context) : SensorEventListener, LocationL
         // The window belongs to the run that just ended. Left in place, a
         // later re-arm computes its first rate across everything in between.
         stepsAtWindowStart = -1L; windowStartedAt = 0L; lastStepAt = 0L; fixAt = 0L
+        stepTimes.clear()
     }
 
     // ── Cadence ──────────────────────────────────────────────────────────
 
     override fun onSensorChanged(event: SensorEvent) {
+        if (event.sensor.type == Sensor.TYPE_STEP_DETECTOR) {
+            onStep(SystemClock.elapsedRealtime())
+            return
+        }
         if (event.sensor.type != Sensor.TYPE_STEP_COUNTER) return
+        // The detector, when present, is the better answer — let it own the
+        // number rather than having two sources fight over it.
+        if (stepTimes.isNotEmpty()) { lastStepAt = SystemClock.elapsedRealtime(); return }
         // TYPE_STEP_COUNTER counts since boot, so a rate needs two readings
         // and the gap between them — the value itself means nothing here.
         val total = event.values.firstOrNull()?.toLong() ?: return
@@ -158,6 +171,47 @@ class PhoneMotion(private val context: Context) : SensorEventListener, LocationL
             val steps = (total - stepsAtWindowStart).coerceAtLeast(0)
             cadence = (steps * 60_000L / elapsed).toInt().coerceIn(0, 300)
             stepsAtWindowStart = total; windowStartedAt = now
+        }
+    }
+
+    /**
+     * TYPE_STEP_DETECTOR fires once per step, as it happens.
+     *
+     * The counter this class started with is a running total, so a rate from
+     * it is only ever an average over a whole window — ten seconds late to
+     * every change of pace, which is exactly the "it does not match my actual
+     * steps" complaint. Timing the gaps between individual steps gives the
+     * real thing: a wearer walking at 100 spm reads 100 within two steps.
+     *
+     * The counter is kept as the fallback, because the detector is optional
+     * hardware while the counter is nearly universal.
+     */
+    private fun startDetector() {
+        val sm = sensors ?: (context.getSystemService(Context.SENSOR_SERVICE) as? SensorManager)
+        val detector = sm?.getDefaultSensor(Sensor.TYPE_STEP_DETECTOR) ?: return
+        sensors = sm
+        sm.registerListener(this, detector, SensorManager.SENSOR_DELAY_FASTEST)
+    }
+
+    /** Timestamps of the most recent steps, newest last. */
+    private val stepTimes = ArrayDeque<Long>()
+
+    private fun onStep(now: Long) {
+        lastStepAt = now
+        stepTimes.addLast(now)
+        // A short memory keeps it responsive; anything older describes a pace
+        // the wearer has already left behind.
+        while (stepTimes.size > STEP_MEMORY) stepTimes.removeFirst()
+        while (stepTimes.isNotEmpty() && now - stepTimes.first() > STEP_WINDOW_MS) {
+            stepTimes.removeFirst()
+        }
+        // Two steps is one interval, which is the least that can define a
+        // rate at all.
+        if (stepTimes.size >= 2) {
+            val span = stepTimes.last() - stepTimes.first()
+            if (span > 0) {
+                cadence = ((stepTimes.size - 1) * 60_000L / span).toInt().coerceIn(0, 300)
+            }
         }
     }
 

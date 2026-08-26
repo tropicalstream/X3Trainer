@@ -2,6 +2,8 @@ package com.x3trainer
 
 import android.content.Context
 import android.os.Build
+import com.x3trainer.engine.ExerciseMode
+import kotlin.math.roundToInt
 
 /** Persistent settings. RayNeo hardware detected by identity, not model (guide gotcha #24). */
 class SettingsStore(context: Context) {
@@ -40,19 +42,81 @@ class SettingsStore(context: Context) {
         set(v) { p.edit().putInt("maxHr", v.coerceIn(120, 220)).apply() }
 
     /** Target running cadence, steps per minute. */
+    /**
+     * What the wearer is doing. Every target below is scoped to it, so
+     * switching to a walk and back does not overwrite a runner's numbers.
+     */
+    var exerciseMode: ExerciseMode
+        get() = ExerciseMode.of(p.getInt("exerciseMode", ExerciseMode.RUN.ordinal))
+        set(v) { p.edit().putInt("exerciseMode", v.ordinal).apply() }
+
+    /** Target cadence in steps per minute, per mode. */
     var targetCadence: Int
-        get() = p.getInt("targetCadence", 175)
-        set(v) { p.edit().putInt("targetCadence", v.coerceIn(120, 220)).apply() }
+        get() = p.getInt("cadence_${exerciseMode.key}", exerciseMode.defaultCadence)
+        set(v) {
+            p.edit().putInt("cadence_${exerciseMode.key}", v.coerceIn(40, 220)).apply()
+        }
 
     /** Target pace in seconds per km (delta velocity is measured against this). */
     var targetPaceSecPerKm: Int
-        get() = p.getInt("targetPace", 330)
-        set(v) { p.edit().putInt("targetPace", v.coerceIn(150, 900)).apply() }
+        get() = p.getInt("pace_${exerciseMode.key}", exerciseMode.defaultPaceSecPerKm)
+        set(v) {
+            // 90 s/km is ~40 km/h, fast for a bicycle and impossible on foot;
+            // the floor has to clear cycling now that cycling is a mode.
+            p.edit().putInt("pace_${exerciseMode.key}", v.coerceIn(90, 1200)).apply()
+        }
 
     val targetVelocityMps: Float get() = 1000f / targetPaceSecPerKm
 
+    /**
+     * Imperial display. STORAGE STAYS METRIC, always — only the reading
+     * changes. Converting the stored value on each toggle would round it a
+     * little every time, so a wearer flipping back and forth would watch
+     * their own body weight drift.
+     */
+    var imperial: Boolean
+        get() = p.getBoolean("imperial", false)
+        set(v) { p.edit().putBoolean("imperial", v).apply() }
+
+    val unitsLabel: String get() = if (imperial) "Imperial" else "Metric"
+
+    /**
+     * The target, read the way this activity is normally read: minutes per
+     * distance on foot, plain speed on a bike. Both describe the same stored
+     * number — cyclists simply do not think in minutes per kilometre.
+     */
     val targetPaceLabel: String
-        get() = "%d:%02d/km".format(targetPaceSecPerKm / 60, targetPaceSecPerKm % 60)
+        get() {
+            if (!exerciseMode.paceOriented) {
+                val kmh = 3600f / targetPaceSecPerKm
+                return if (imperial) "%.0f mph".format(kmh / KM_PER_MILE)
+                else "%.0f km/h".format(kmh)
+            }
+            val secs = if (imperial) (targetPaceSecPerKm * KM_PER_MILE).toInt()
+            else targetPaceSecPerKm
+            val unit = if (imperial) "/mi" else "/km"
+            return "%d:%02d%s".format(secs / 60, secs % 60, unit)
+        }
+
+    /** Body weight as the wearer reads it — kilograms or pounds. */
+    val bodyWeightLabel: String
+        get() = if (imperial) "${(bodyWeightKg * LB_PER_KG).roundToInt()} lb"
+        else "$bodyWeightKg kg"
+
+    /** A speed in m/s, rendered in the wearer's units. Cadence stays spm in
+     *  both: steps per minute is what every running app uses and there is no
+     *  imperial equivalent to convert to. */
+    fun speedText(mps: Float): String =
+        if (imperial) "%.1fmph".format(mps * MPH_PER_MPS) else "%.1fm/s".format(mps)
+
+    /** The same, without the unit — for the "actual > target" pairing. */
+    fun speedValue(mps: Float): String =
+        if (imperial) "%.1f".format(mps * MPH_PER_MPS) else "%.1f".format(mps)
+
+    /** Calorie goal for one session; the HUD counts towards it. */
+    var targetKcal: Int
+        get() = p.getInt("targetKcal", 300)
+        set(v) { p.edit().putInt("targetKcal", v.coerceIn(50, 2000)).apply() }
 
     /** Target HR zone (1..5) the coach steers you toward in free modes. */
     var targetZone: Int
@@ -136,11 +200,19 @@ class SettingsStore(context: Context) {
         p.edit()
             .remove("dataSource").remove("maxHr").remove("targetCadence")
             .remove("targetPace").remove("targetZone").remove("coachLevel")
+            .remove("targetKcal").remove("imperial")
             .remove("voiceVol").remove("sndVol")
             .remove("cdMin").remove("intWork").remove("intRest").remove("intRounds")
             .remove("emomMin").remove("amrapMin").remove("timerMode")
             .remove("swipeSens").remove("sbs")
             .remove("wkProgram").remove("wkLevel").remove("bodyKg")
             .apply()
+    }
+
+    private companion object {
+        /** Exactly, by definition of the international mile. */
+        const val KM_PER_MILE = 1.609344f
+        const val LB_PER_KG = 2.2046226f
+        const val MPH_PER_MPS = 2.2369363f
     }
 }

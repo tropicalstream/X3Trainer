@@ -67,7 +67,9 @@ class Renderer(private val engine: Trainer, private val store: SettingsStore) {
         paint.textAlign = Paint.Align.LEFT
         paint.textSize = 20f
         paint.color = Color.rgb(160, 200, 255)
-        c.drawText(t.mode.label, 12f, 32f, paint)
+        // Timer type, then the activity: the numbers below mean different
+        // things in each, so which one is live has to be visible.
+        c.drawText(t.mode.label + "  " + store.exerciseMode.label.uppercase(), 12f, 32f, paint)
 
         // Clock, center — the headline number.
         paint.textAlign = Paint.Align.CENTER
@@ -97,7 +99,9 @@ class Renderer(private val engine: Trainer, private val store: SettingsStore) {
             paint.textAlign = Paint.Align.CENTER
             paint.textSize = 20f
             paint.color = Color.argb((255 * blink).toInt(), 255, 220, 90)
-            c.drawText("SWITCH TO ${pending.label}?  TAP TO CONFIRM", W / 2f, 74f, paint)
+            // Below the telemetry line, which now occupies the space this
+            // prompt used to have to itself.
+            c.drawText("SWITCH TO ${pending.label}?  TAP TO CONFIRM", W / 2f, 104f, paint)
         }
     }
 
@@ -110,11 +114,32 @@ class Renderer(private val engine: Trainer, private val store: SettingsStore) {
         paint.textSize = 22f
         paint.color = zoneColor
 
+        val mode = store.exerciseMode
         val hrTxt = if (engine.hr > 0) "${engine.hr}bpm Z$zone" else "--bpm"
-        val cadTxt = if (engine.cadence > 0) "${engine.cadence}spm>${store.targetCadence}" else "--spm"
-        val dv = engine.deltaV
-        val dvTxt = if (dv > -90f) "%+.1fm/s".format(dv) else "--m/s"
-        c.drawText("$hrTxt   $cadTxt   $dvTxt", W / 2f, BOT_Y + 30f, paint)
+        // A bike has no footfalls to report. Showing "--spm" there would imply
+        // a reading that is merely missing, when in fact it does not apply —
+        // so the field is dropped from the line entirely.
+        val cadTxt = when {
+            !mode.stepCadence -> ""
+            engine.cadence > 0 -> "${engine.cadence}spm>${store.targetCadence}"
+            else -> "--spm"
+        }
+        // ACTUAL SPEED, NOT THE DIFFERENCE. This showed deltaV — how far off
+        // target pace the wearer was — which is a signed number that reads as
+        // a negative SPEED to anyone glancing at "m/s", and walking honestly
+        // produced "-1.4m/s". Show the measured speed against its target, the
+        // way cadence already does, and let the coach keep the difference to
+        // itself: the wearer can see the gap without doing the subtraction.
+        val spd = engine.speedMps
+        val spdUnit = if (store.imperial) "mph" else "m/s"
+        val spdTxt = if (spd >= 0f)
+            store.speedValue(spd) + spdUnit + ">" + store.speedValue(store.targetVelocityMps)
+        else "--$spdUnit"
+        val kcalTxt = "${engine.kcal.toInt()}>${store.targetKcal}kcal"
+        val line = listOf(hrTxt, cadTxt, spdTxt, kcalTxt)
+            .filter { it.isNotEmpty() }
+            .joinToString("   ")
+        c.drawText(line, W / 2f, telemetryBaseline(), paint)
 
         // Source status, tiny, bottom-left; never louder than the data.
         paint.textAlign = Paint.Align.LEFT
@@ -127,23 +152,35 @@ class Renderer(private val engine: Trainer, private val store: SettingsStore) {
         c.drawText("swipe up: mat coach", W - 8f, H - 8f, paint)
     }
 
+    /**
+     * Where the telemetry line sits.
+     *
+     * It used to live in the bottom band, which respected the layout contract
+     * but not the wearer's eyes: on a waveguide the bottom edge sits at a
+     * different focal distance from the timer, so reading a pulse meant
+     * refocusing away from the clock and back again mid-exercise. Tucked
+     * directly beneath the timer strip, both are one glance at one depth.
+     *
+     * The centre stays empty either way — that is the part of the contract
+     * that matters, and this moves the line UP into the band the timer
+     * already occupies rather than down into the sightline.
+     */
+    private fun telemetryBaseline(): Float = TOP_H + 24f
+
     /** Transient center-view content only: celebrations, warnings, red frame. */
     private fun drawCenterEvents(c: Canvas) {
-        // Red flashing frame on device warnings.
-        if (engine.warningFlash > 0.01f) {
-            val pulse = (0.5f + 0.5f * sin(engine.time * 10f)) * engine.warningFlash
-            paint.style = Paint.Style.STROKE
-            paint.strokeWidth = 14f
-            paint.color = Color.argb((230 * pulse).toInt(), 255, 40, 30)
-            c.drawRect(7f, 7f, W - 7f, H - 7f, paint)
-            paint.style = Paint.Style.FILL
-        }
+        // A lost link is reported along the BOTTOM, pulsing, and nowhere
+        // else. The red full-screen frame and the centre-of-vision text that
+        // used to announce it were an emergency's worth of alarm for a phone
+        // in the wrong pocket — and the centre is the one region the layout
+        // contract exists to keep empty.
         engine.warningText?.let {
+            val pulse = 0.45f + 0.55f * (0.5f + 0.5f * sin(engine.time * 5f))
             paint.typeface = mono
             paint.textAlign = Paint.Align.CENTER
-            paint.textSize = 26f
-            paint.color = Color.rgb(255, 80, 60)
-            c.drawText(it, W / 2f, H / 2f - 10f, paint)
+            paint.textSize = 16f
+            paint.color = Color.argb((255 * pulse).toInt(), 255, 70, 55)
+            c.drawText(it, W / 2f, H - 30f, paint)
         }
         engine.coach.celebration?.let {
             paint.typeface = mono
@@ -263,6 +300,8 @@ class Renderer(private val engine: Trainer, private val store: SettingsStore) {
 
     // ------------------------------------------------------------- settings
 
+    private fun menuEditing(): Boolean = engine.menu.editing
+
     private fun drawSettings(c: Canvas) {
         paint.typeface = mono
         paint.textAlign = Paint.Align.CENTER
@@ -271,7 +310,14 @@ class Renderer(private val engine: Trainer, private val store: SettingsStore) {
         c.drawText("SETTINGS", W / 2f, 40f, paint)
         paint.textSize = 12f
         paint.color = Color.rgb(140, 150, 165)
-        c.drawText("swipe = navigate/adjust · tap = select · double-tap = back", W / 2f, 62f, paint)
+        // The hint states the CURRENT meaning of a swipe, not a general
+        // description of both — a wearer glancing at this needs to know what
+        // their next swipe will do, which depends on the mode they are in.
+        c.drawText(
+            if (menuEditing()) "swipe = change value · tap = done · double-tap = back"
+            else "swipe = move · tap = open · double-tap = back",
+            W / 2f, 62f, paint
+        )
 
         val menu = engine.menu
         val visible = 11
@@ -280,13 +326,22 @@ class Renderer(private val engine: Trainer, private val store: SettingsStore) {
         for (i in first until minOf(menu.items.size, first + visible)) {
             val item = menu.items[i]
             val sel = i == menu.selected
+            val edit = sel && menu.editing
             paint.textSize = if (sel) 20f else 17f
             paint.textAlign = Paint.Align.LEFT
             paint.color = if (sel) Color.rgb(255, 230, 120) else Color.rgb(190, 195, 205)
             c.drawText((if (sel) "> " else "  ") + item.label, 90f, y, paint)
             paint.textAlign = Paint.Align.RIGHT
-            paint.color = if (sel) Color.WHITE else Color.rgb(160, 165, 175)
-            c.drawText(item.value(), W - 90f, y, paint)
+            // In edit mode the value is bracketed by arrows and turns green:
+            // the wearer must be able to tell at a glance that their next
+            // swipe changes THIS number rather than moving off it.
+            paint.color = when {
+                edit -> Color.rgb(120, 255, 150)
+                sel -> Color.WHITE
+                else -> Color.rgb(160, 165, 175)
+            }
+            val shown = if (edit) "< " + item.value() + " >" else item.value()
+            c.drawText(shown, W - 90f, y, paint)
             y += 32f
         }
     }

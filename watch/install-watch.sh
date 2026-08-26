@@ -10,13 +10,14 @@
 #
 # If install fails with a signature/certificate error (common on Samsung
 # watches with the default Tizen certificate), create a Samsung certificate:
-#   arch -x86_64 open /Users/me/tizen-studio/tools/certificate-manager/certificate-manager.app
+#   arch -x86_64 open "$TIZEN_STUDIO"/tools/certificate-manager/certificate-manager.app
 #   -> new certificate profile > Samsung > Mobile/Wearable > sign in with a
 #      Samsung account; the connected watch's DUID is picked up automatically.
 # Re-run this script afterwards (it re-signs with the active profile).
 
 set -e
-TS=/Users/me/tizen-studio
+# Point TIZEN_STUDIO at your install if it is not in the default place.
+TS="${TIZEN_STUDIO:-$HOME/tizen-studio}"
 SDB="$TS/tools/sdb"
 TZ="$TS/tools/ide/bin/tizen"
 PROJ="$(cd "$(dirname "$0")/X3TrainerBroadcaster" && pwd)"
