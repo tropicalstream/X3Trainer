@@ -128,7 +128,10 @@ class SportsTimer(private val store: SettingsStore, private val events: TimerEve
 
     /** Secondary HUD string: phase and rounds, e.g. "WORK 3/8". */
     fun phaseText(): String = when (mode) {
-        TimerMode.STOPWATCH -> "TOTAL"
+        // A stopwatch has one phase and no rounds, so a phase label here
+        // could only ever restate the mode already shown on the left. It read
+        // as a number's heading with no number under it.
+        TimerMode.STOPWATCH -> ""
         TimerMode.COUNTDOWN -> "REMAINING"
         TimerMode.INTERVAL, TimerMode.TABATA ->
             (if (inWork) "WORK" else "REST") + " $round/$totalRounds"

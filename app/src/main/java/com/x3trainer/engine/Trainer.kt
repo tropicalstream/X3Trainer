@@ -60,9 +60,40 @@ class Trainer(
     val zone: Int get() = HrZones.zone(hr, store.maxHr)
     val deltaV: Float get() = if (speedMps < 0f) -99f else speedMps - store.targetVelocityMps
 
+    /**
+     * Energy burned so far this session, in kilocalories.
+     *
+     * Heart rate is used when there is one, through the Keytel relation —
+     * it responds to how hard the WEARER is actually working, which a clock
+     * cannot. Age is not asked for anywhere in this app, so it is inferred
+     * from the max-heart-rate setting the wearer already tunes (the usual
+     * 220-minus-age), which keeps the estimate honest without adding a
+     * second thing to configure.
+     *
+     * With no pulse it falls back to a moderate MET, because "unknown" is
+     * not a useful thing to show where a target is being counted towards,
+     * and a clock plus a body weight is still a defensible estimate of
+     * general exercise.
+     */
+    var kcal: Float = 0f
+        private set
+
+    private fun burnPerMinute(): Float {
+        val kg = store.bodyWeightKg.toFloat()
+        if (hr > 0) {
+            val age = (220 - store.maxHr).coerceIn(15, 90).toFloat()
+            // Keytel et al., male coefficients, clamped at zero: at rest the
+            // formula goes negative and a workout cannot un-burn calories.
+            val perMin = (-55.0969f + 0.6309f * hr + 0.1988f * kg + 0.2017f * age) / 4.184f
+            return perMin.coerceAtLeast(0f)
+        }
+        // No pulse: fall back to the activity's own intensity rather than
+        // one number for everything — a walk and a run are not the same burn.
+        return store.exerciseMode.met * 3.5f * kg / 200f
+    }
+
     // --- transient center-view events ---
     var warningText: String? = null; private set
-    var warningFlash = 0f; private set        // red frame alpha driver, decays
     private var warningUntil = 0f
 
     // --- swipe+confirm timer mode switch ---
@@ -84,10 +115,13 @@ class Trainer(
         time += dt
         timer.update(dt)
         if (state == AppState.HUD) {
+            // Only while the clock runs: a paused timer is a rest, and a
+            // calorie counter that climbs during rest makes the target
+            // meaningless.
+            if (timer.running) kcal += burnPerMinute() * dt / 60f
             coach.update(dt, timer.running, timer.elapsed, hr, zone, cadence, deltaV)
         }
         if (state == AppState.WORKOUT) workout.update(dt, hr, zone)
-        if (warningFlash > 0f) warningFlash = maxOf(0f, warningFlash - dt * 0.5f)
         if (warningText != null && time > warningUntil) warningText = null
         if (pendingMode != null && time > pendingUntil) {
             pendingMode = null
@@ -138,6 +172,7 @@ class Trainer(
             AppState.HUD -> {
                 if (pendingMode != null) { pendingMode = null; host.sound(Sfx.CANCEL); return }
                 timer.reset()
+                kcal = 0f          // same session, same zero
                 host.sound(Sfx.RESET)
                 host.say("timer_reset")
             }
@@ -168,6 +203,9 @@ class Trainer(
     }
 
     fun closeSettings() {
+        // Leaving settings mid-edit must not leave the menu believing a swipe
+        // still means "change this value" when it reopens.
+        menu.onClose()
         state = if (workout.active) AppState.WORKOUT else AppState.HUD
         host.workoutSurface(state == AppState.WORKOUT)
         host.sound(Sfx.SELECT)
@@ -289,11 +327,24 @@ class Trainer(
 
     override fun onStatus(status: String) { sourceStatus = status }
 
+    /**
+     * A telemetry link went quiet — the watch, the phone bridge, Bluetooth.
+     *
+     * Deliberately QUIET about it. This used to throw a red frame around the
+     * whole viewport, print across the centre of the wearer's sight, sound an
+     * alarm and speak an urgent line — for something that is usually a phone
+     * in the wrong pocket, and which resolves itself. Mid-workout that is
+     * startling out of all proportion, and it put text in the one part of the
+     * display the layout contract keeps clear.
+     *
+     * Now it is a small pulsing line along the bottom: visible if you look,
+     * ignorable if you are busy. Nothing here is a health signal — the
+     * sustained Zone-5 warning is the coach's own, still spoken, still
+     * unconditional.
+     */
     override fun onDeviceWarning(message: String) {
         warningText = message
         warningUntil = time + 6f
-        warningFlash = 1f
-        host.sound(Sfx.WARN)
-        host.say("device_warning", urgent = true)
     }
+
 }

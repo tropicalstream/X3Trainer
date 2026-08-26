@@ -21,7 +21,7 @@ import java.util.UUID
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
- * Reads live Active2 telemetry from the paired Galaxy phone over classic
+ * Reads live watch telemetry from the paired phone over classic
  * Bluetooth RFCOMM. This is the X3 Pro's supported phone link; BLE scanning is
  * intentionally left to the S23 companion because the glasses vendor stack
  * does not reliably expose a BluetoothLeScanner to third-party apps.
@@ -132,7 +132,7 @@ class PhoneRelaySource(private val context: Context) : TelemetrySource {
                 lastPacketAt = SystemClock.uptimeMillis()
                 staleWarned = false
                 handler.post {
-                    listener?.onStatus("ACTIVE2 VIA PHONE")
+                    listener?.onStatus("WATCH VIA PHONE")
                     listener?.onSample(TelemetrySample(hr, cadence, speed, lastPacketAt))
                 }
                 Log.d(TAG, "sample hr=$hr cadence=$cadence speed=$speed")

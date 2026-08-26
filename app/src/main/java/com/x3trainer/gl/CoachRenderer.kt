@@ -103,9 +103,10 @@ class CoachRenderer(private val engine: Trainer) : GLSurfaceView.Renderer {
         val vw = if (sbs) width / 2 else width
         val aspect = vw.toFloat() / height.toFloat()
 
-        // Fixed studio camera with a slow, subtle orbit for 3D pop.
-        val orbit = sin(t * 0.31f) * 0.45f
-        Matrix.setLookAtM(view, 0, orbit, 1.35f, 3.4f, 0f, 0.72f, 0f, 0f, 1f, 0f)
+        // Keep the camera fixed.  A moving camera looks stylish, but on a
+        // glasses display it makes a held limb appear to drift and obscures
+        // whether the athlete should be moving or simply holding position.
+        Matrix.setLookAtM(view, 0, 0f, 1.35f, 3.4f, 0f, 0.72f, 0f, 0f, 1f, 0f)
         Matrix.perspectiveM(proj, 0, 42f, aspect, 0.1f, 50f)
         Matrix.multiplyMM(mvp, 0, proj, 0, view, 0)
 
@@ -122,7 +123,7 @@ class CoachRenderer(private val engine: Trainer) : GLSurfaceView.Renderer {
             GLES30.glUniform1f(uAlpha, 1f)
             scene.draw(GLES30.GL_LINES)
             GLES30.glUniform1f(uPoint, 1f)
-            GLES30.glUniform1f(uPointSize, 9f)
+            GLES30.glUniform1f(uPointSize, 11f)
             glow.draw(GLES30.GL_POINTS)
 
             GLES30.glUniformMatrix4fv(uMVP, 1, false, ortho, 0)
@@ -153,7 +154,9 @@ class CoachRenderer(private val engine: Trainer) : GLSurfaceView.Renderer {
         // Soft ground anchor under the coach.
         ring(0f, 0.003f, 0f, 0.42f, 16, 0.25f, 0.5f, 0.9f, 0.10f)
 
+        drawSupportMarkers()
         drawSkeleton()
+        drawVisualCues(ex, snap.u)
         when (ex.db) {
             Db.PAIR -> { dumbbellAt(Rig.WRI_L, Rig.HAND_L, rig.barAxisL); dumbbellAt(Rig.WRI_R, Rig.HAND_R, rig.barAxisR) }
             Db.SINGLE -> singleDumbbell()
@@ -205,11 +208,15 @@ class CoachRenderer(private val engine: Trainer) : GLSurfaceView.Renderer {
 
     private fun drawSkeleton() {
         val p = rig.pos
-        val r = 0.35f; val g = 0.95f; val b = 1f
         var i = 0
         while (i < BONES.size) {
-            val a0 = BONES[i] * 3; val b0 = BONES[i + 1] * 3
-            scene.line(p[a0], p[a0 + 1], p[a0 + 2], p[b0], p[b0 + 1], p[b0 + 2], r, g, b, 0.95f)
+            val a = BONES[i]; val b = BONES[i + 1]
+            val a0 = a * 3; val b0 = b * 3
+            when {
+                isLeft(a) && isLeft(b) -> scene.line(p[a0], p[a0 + 1], p[a0 + 2], p[b0], p[b0 + 1], p[b0 + 2], 0.25f, 1f, 0.72f, 0.97f)
+                isRight(a) && isRight(b) -> scene.line(p[a0], p[a0 + 1], p[a0 + 2], p[b0], p[b0 + 1], p[b0 + 2], 1f, 0.38f, 0.82f, 0.97f)
+                else -> scene.line(p[a0], p[a0 + 1], p[a0 + 2], p[b0], p[b0 + 1], p[b0 + 2], 0.35f, 0.95f, 1f, 0.97f)
+            }
             i += 2
         }
         // Head: a glowing circle above the neck.
@@ -219,10 +226,54 @@ class CoachRenderer(private val engine: Trainer) : GLSurfaceView.Renderer {
             val an = k / 12f * 6.2832f
             val nx = hx + cos(an) * Rig.HEAD_R
             val ny = hy + sin(an) * Rig.HEAD_R
-            scene.line(prevX, prevY, hz, nx, ny, hz, r, g, b, 0.95f)
+            scene.line(prevX, prevY, hz, nx, ny, hz, 0.35f, 0.95f, 1f, 0.95f)
             prevX = nx; prevY = ny
         }
-        for (j in JOINT_DOTS) glow.v(p[j * 3], p[j * 3 + 1], p[j * 3 + 2], 0.8f, 1f, 1f, 0.75f)
+        for (j in JOINT_DOTS) addJointGlow(j)
+    }
+
+    /**
+     * A cyan/rose split makes left and right limbs distinguishable through the
+     * waveguide, while the spine stays neutral cyan.  That is especially
+     * valuable when a stretch changes sides without a spoken cue.
+     */
+    private fun addJointGlow(j: Int) {
+        val p = rig.pos; val o = j * 3
+        when {
+            isLeft(j) -> glow.v(p[o], p[o + 1], p[o + 2], 0.25f, 1f, 0.72f, 0.92f)
+            isRight(j) -> glow.v(p[o], p[o + 1], p[o + 2], 1f, 0.38f, 0.82f, 0.92f)
+            else -> glow.v(p[o], p[o + 1], p[o + 2], 0.35f, 0.95f, 1f, 0.92f)
+        }
+    }
+
+    private fun isLeft(j: Int) = j in Rig.HIP_L..Rig.TOE_L || j in Rig.SH_L..Rig.HAND_L
+    private fun isRight(j: Int) = j in Rig.HIP_R..Rig.TOE_R || j in Rig.SH_R..Rig.HAND_R
+
+    /** Ground rings make the active supports clear without adding visual bulk. */
+    private fun drawSupportMarkers() {
+        val p = rig.pos
+        val supports = intArrayOf(
+            Rig.ELB_L, Rig.ELB_R, Rig.WRI_L, Rig.WRI_R, Rig.HAND_L, Rig.HAND_R,
+            Rig.KNEE_L, Rig.KNEE_R, Rig.ANKLE_L, Rig.ANKLE_R, Rig.TOE_L, Rig.TOE_R,
+        )
+        for (j in supports) {
+            val o = j * 3
+            if (p[o + 1] <= 0.065f) {
+                ring(p[o], 0.007f, p[o + 2], 0.045f, 8, 0.95f, 0.78f, 0.22f, 0.70f)
+            }
+        }
+    }
+
+    /** Draw an amber link wherever the pose deliberately joins two body parts. */
+    private fun drawVisualCues(ex: com.x3trainer.workout.Exercise, phase: Float) {
+        val p = rig.pos
+        for (cue in Exercises.visualCues(ex.key)) {
+            if (phase < cue.start || phase >= cue.end) continue
+            val a = cue.from * 3; val b = cue.to * 3
+            scene.line(p[a], p[a + 1], p[a + 2], p[b], p[b + 1], p[b + 2], 1f, 0.70f, 0.20f, 0.96f)
+            glow.v(p[a], p[a + 1], p[a + 2], 1f, 0.76f, 0.25f, 1f)
+            glow.v(p[b], p[b + 1], p[b + 2], 1f, 0.76f, 0.25f, 1f)
+        }
     }
 
     /** A dumbbell in one hand: bar through the grip, plate crosses at the ends. */
