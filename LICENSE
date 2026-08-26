@@ -1,0 +1,34 @@
+MIT License
+
+Copyright (c) 2026 tropicalstream
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+ADDITIONAL NOTICE FOR THIS PROJECT
+
+This Software is sample and demonstration code. It is not a medical device and
+not a certified fitness product, and it is not intended to be used to conduct
+actual exercise. Exercise carries an inherent risk of serious injury,
+disability and death. Consult a qualified physician before beginning any
+exercise program or using this Software in connection with physical activity.
+The heart rate, calorie, cadence and pace figures it displays are estimates and
+are unsuitable for any medical, diagnostic or safety purpose. Use is entirely
+at your own risk. See DISCLAIMER.md, which forms part of these terms.
