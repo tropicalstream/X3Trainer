@@ -193,25 +193,36 @@ class Renderer(private val engine: Trainer, private val store: SettingsStore) {
 
     // ----------------------------------------------------------- disclaimer
 
+    /**
+     * The gate the wearer meets before anything else, and the only safety
+     * notice most of them will ever read — the README and LICENSE are for
+     * people reading the source, not for someone about to start moving.
+     *
+     * It leads with what this IS, because "sample software, not for actual
+     * exercise" is the claim everything else rests on, and a wearer who takes
+     * only the headline away should still have taken away the right one.
+     */
     private val disclaimerLines = listOf(
-        "X3TRAINER - READ BEFORE USE" to 24f,
-        "" to 10f,
-        "HEALTH: This app provides general fitness" to 16f,
-        "information, not medical advice. Consult a" to 16f,
-        "physician before starting any exercise program." to 16f,
-        "STOP if you feel pain, dizziness, chest pressure" to 16f,
-        "or shortness of breath, and seek medical help." to 16f,
-        "In an emergency call your local emergency number." to 16f,
-        "" to 10f,
-        "MOISTURE: These glasses are NOT waterproof." to 16f,
-        "Heavy sweat or rain can damage the waveguides" to 16f,
-        "and electronics - see the RayNeo glasses guide." to 16f,
-        "" to 10f,
-        "AWARENESS: Keep your eyes on the road. The" to 16f,
-        "center of view stays clear by design - stay" to 16f,
-        "alert to traffic, terrain and people around you." to 16f,
-        "" to 10f,
-        "TAP TO ACCEPT AND CONTINUE" to 20f,
+        "X3TRAINER - SAMPLE SOFTWARE" to 22f,
+        "" to 6f,
+        "DEMONSTRATION ONLY - not a medical device," to 15f,
+        "and NOT intended for actual exercise use." to 15f,
+        "" to 6f,
+        "HEALTH: See a physician BEFORE starting any" to 15f,
+        "exercise program or using this app to train." to 15f,
+        "Nothing here is medical advice. The heart rate," to 15f,
+        "calorie and pace figures are ESTIMATES only." to 15f,
+        "STOP if you feel pain, dizziness, chest pressure" to 15f,
+        "or breathlessness, and seek medical help." to 15f,
+        "In an emergency call your local emergency number." to 15f,
+        "" to 6f,
+        "MOISTURE: These glasses are NOT waterproof." to 15f,
+        "Sweat or rain can damage them - see RayNeo's guide." to 15f,
+        "" to 6f,
+        "AWARENESS: Keep your eyes on the road. Stay alert" to 15f,
+        "to traffic, terrain and people around you." to 15f,
+        "" to 6f,
+        "TAP TO ACCEPT - YOU USE THIS AT YOUR OWN RISK" to 17f,
     )
 
     private fun drawDisclaimer(c: Canvas) {
@@ -228,6 +239,9 @@ class Renderer(private val engine: Trainer, private val store: SettingsStore) {
                 }
                 line.startsWith("HEALTH") || line.startsWith("MOISTURE") || line.startsWith("AWARENESS") ->
                     Color.rgb(255, 200, 90)
+                // The two lines that say what this software is not.
+                line.startsWith("DEMONSTRATION") || line.startsWith("and NOT") ->
+                    Color.rgb(255, 140, 110)
                 else -> Color.rgb(210, 215, 225)
             }
             if (line.isNotEmpty()) c.drawText(line, W / 2f, y, paint)

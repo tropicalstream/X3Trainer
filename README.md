@@ -1,5 +1,31 @@
 # X3Trainer
 
+> ## ⚠️ SAMPLE SOFTWARE — NOT FOR ACTUAL EXERCISE
+>
+> **This is a demonstration and reference project, not a consumer fitness
+> product and not a medical device.** It is **not intended to be used to
+> conduct actual exercise.**
+>
+> **See a doctor first.** Consult a qualified physician before beginning any
+> exercise program, and before using this software in connection with any
+> physical activity. If a physician has not cleared you to exercise, do not
+> use it.
+>
+> Nothing this software displays or says is medical advice. The heart-rate,
+> calorie, cadence and pace figures are **estimates** from consumer sensors —
+> they are not clinical measurements and must not be used to judge whether
+> exertion is safe for you. It cannot detect a medical emergency.
+>
+> Stop at once and seek medical attention for pain, chest pressure, dizziness,
+> faintness, irregular heartbeat or unusual breathlessness. In an emergency,
+> call your local emergency number.
+>
+> Exercise carries an inherent risk of serious injury, disability and death.
+> **Use of this software is entirely at your own risk.** The authors accept no
+> liability — see **[DISCLAIMER.md](DISCLAIMER.md)** and [LICENSE](LICENSE),
+> which you should read in full before use.
+
+
 An AR fitness coach for the **RayNeo X3 Pro** smart glasses: a sports timer
 and live watch telemetry pinned to the edges of your vision, an enthusiastic
 voice coach in your ears, and — by design — **nothing at all in the middle of
