@@ -20,24 +20,13 @@ object Exercises {
 
     private val NO_VISUAL_CUES = emptyArray<VisualCue>()
     private val VISUAL_CUES: Map<String, Array<VisualCue>> = mapOf(
-        "shoulder_cross" to arrayOf(
-            VisualCue(Rig.HAND_R, Rig.ELB_L, 0f, 0.5f),
-            VisualCue(Rig.HAND_L, Rig.ELB_R, 0.5f, 1f),
-        ),
-        "tricep_overhead" to arrayOf(
-            VisualCue(Rig.HAND_R, Rig.ELB_L, 0f, 0.5f),
-            VisualCue(Rig.HAND_L, Rig.ELB_R, 0.5f, 1f),
-        ),
         "quad_stretch" to arrayOf(
             VisualCue(Rig.HAND_R, Rig.ANKLE_R, 0f, 0.5f),
             VisualCue(Rig.HAND_L, Rig.ANKLE_L, 0.5f, 1f),
         ),
         "tree" to arrayOf(
-            VisualCue(Rig.TOE_R, Rig.KNEE_L, 0f, 0.5f),
-            VisualCue(Rig.TOE_L, Rig.KNEE_R, 0.5f, 1f),
-        ),
-        "butterfly" to arrayOf(
-            VisualCue(Rig.HAND_L, Rig.TOE_L), VisualCue(Rig.HAND_R, Rig.TOE_R),
+            VisualCue(Rig.ANKLE_R, Rig.KNEE_L, 0f, 0.5f),
+            VisualCue(Rig.ANKLE_L, Rig.KNEE_R, 0.5f, 1f),
         ),
         "figure_four" to arrayOf(
             VisualCue(Rig.ANKLE_R, Rig.KNEE_L, 0f, 0.5f),
@@ -387,10 +376,12 @@ object Exercises {
             pose { legs(hip = 42f, abd = 80f, knee = 166f, ankle = 15f); spine(pitch = 16f); arms(pitch = 57f, elbow = 72f); head(8f) }),
 
         Exercise("figure_four", "FIGURE FOUR", 16f, 90f, Db.NONE, t(0f, 0.42f, 0.5f, 0.92f),
-            pose { body(pitch = -88f); legL(hip = 72f, knee = 88f); legR(hip = 55f, abd = 48f, knee = 115f); arms(pitch = 62f, elbow = 42f); head(10f) },
-            pose { body(pitch = -88f); legL(hip = 75f, knee = 90f); legR(hip = 57f, abd = 50f, knee = 117f); arms(pitch = 64f, elbow = 44f); head(10f) },
-            pose { body(pitch = -88f); legR(hip = 72f, knee = 88f); legL(hip = 55f, abd = 48f, knee = 115f); arms(pitch = 62f, elbow = 42f); head(10f) },
-            pose { body(pitch = -88f); legR(hip = 75f, knee = 90f); legL(hip = 57f, abd = 50f, knee = 117f); arms(pitch = 64f, elbow = 44f); head(10f) }),
+            // The crossed ankle now reaches the opposite knee; the old pose
+            // left the two landmarks more than half a metre apart.
+            pose { body(pitch = -88f); legL(hip = 72f, knee = 88f); legR(hip = 120f, abd = -55f, knee = 115f); arms(pitch = 62f, elbow = 42f); head(10f) },
+            pose { body(pitch = -88f); legL(hip = 75f, knee = 90f); legR(hip = 122f, abd = -55f, knee = 117f); arms(pitch = 64f, elbow = 44f); head(10f) },
+            pose { body(pitch = -88f); legR(hip = 72f, knee = 88f); legL(hip = 120f, abd = -55f, knee = 115f); arms(pitch = 62f, elbow = 42f); head(10f) },
+            pose { body(pitch = -88f); legR(hip = 75f, knee = 90f); legL(hip = 122f, abd = -55f, knee = 117f); arms(pitch = 64f, elbow = 44f); head(10f) }),
 
         Exercise("hip_flexor_lunge", "HIP FLEXOR", 16f, 85f, Db.NONE, t(0f, 0.42f, 0.5f, 0.92f),
             pose { legL(hip = 72f, knee = 92f); legR(hip = -22f, knee = 88f, ankle = 50f); spine(pitch = -8f); arms(pitch = 145f, elbow = 6f); head(-10f) },
