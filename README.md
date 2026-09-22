@@ -1,5 +1,13 @@
 # X3Trainer
 
+<p align="center">
+  <a href="https://youtu.be/atBY9inEQyQ">
+    <img src="https://img.youtube.com/vi/atBY9inEQyQ/maxresdefault.jpg" width="720" alt="X3Trainer demo on the RayNeo X3 Pro — click to watch">
+  </a>
+  <br>
+  <a href="https://youtu.be/atBY9inEQyQ"><b>▶ Watch the demo on YouTube</b></a>
+</p>
+
 > ## ⚠️ SAMPLE SOFTWARE — NOT FOR ACTUAL EXERCISE
 >
 > **This is a demonstration and reference project, not a consumer fitness
